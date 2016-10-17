@@ -8,7 +8,7 @@ FIND_LIBRARY(GLEW_LIBRARY GLEW)
 FIND_LIBRARY(GL_LIBRARY OpenGL)
 FIND_LIBRARY(CL_LIBRARY OpenCL)
 
-file(GLOB SOURCES "src/*.c")
+file(GLOB SOURCES "../src/*.c")
 add_executable(gi ${SOURCES})
 
 include_directories(${GLEW_INCLUDE})
