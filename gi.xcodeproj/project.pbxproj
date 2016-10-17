@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		9D0EFD921DB012AF00303CB4 /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D0EFD911DB012AF00303CB4 /* main.c */; };
-		9D0EFD9D1DB0188200303CB4 /* hello.cl in Sources */ = {isa = PBXBuildFile; fileRef = 9D0EFD9C1DB0188200303CB4 /* hello.cl */; };
 		9D0EFDA01DB018DF00303CB4 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0EFD9F1DB018DF00303CB4 /* OpenCL.framework */; };
 		9D0EFDA21DB0227900303CB4 /* SDL2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D0EFDA11DB0227900303CB4 /* SDL2.framework */; };
 		9D43BB081DB359DA003A7C01 /* glfw.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D43BB061DB359DA003A7C01 /* glfw.c */; };
@@ -17,6 +16,7 @@
 		9D43BB121DB36810003A7C01 /* xxGl.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D43BB101DB36810003A7C01 /* xxGl.c */; };
 		9D58D89C1DB2CCD8007AEECB /* libGLEW.2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D58D89B1DB2CCD8007AEECB /* libGLEW.2.0.0.dylib */; };
 		9D58D89E1DB2CE08007AEECB /* libglfw3.3.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D58D89D1DB2CE08007AEECB /* libglfw3.3.2.dylib */; };
+		9D6FEB441DB4D7C3009EAF56 /* hello.cl in Sources */ = {isa = PBXBuildFile; fileRef = 9D6FEB431DB4D7C3009EAF56 /* hello.cl */; };
 		9DAE23B41DB2C40D00740E93 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9DAE23B31DB2C40D00740E93 /* OpenGL.framework */; };
 /* End PBXBuildFile section */
 
@@ -46,9 +46,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		9D0EFD8E1DB012AF00303CB4 /* opencl-xcode */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "opencl-xcode"; sourceTree = BUILT_PRODUCTS_DIR; };
+		9D0EFD8E1DB012AF00303CB4 /* gi */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = gi; sourceTree = BUILT_PRODUCTS_DIR; };
 		9D0EFD911DB012AF00303CB4 /* main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
-		9D0EFD9C1DB0188200303CB4 /* hello.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; name = hello.cl; path = kernels/hello.cl; sourceTree = SOURCE_ROOT; };
 		9D0EFD9F1DB018DF00303CB4 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
 		9D0EFDA11DB0227900303CB4 /* SDL2.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SDL2.framework; path = ../../../../../Library/Frameworks/SDL2.framework; sourceTree = "<group>"; };
 		9D43BB061DB359DA003A7C01 /* glfw.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = glfw.c; sourceTree = "<group>"; };
@@ -61,6 +60,7 @@
 		9D43BB111DB36810003A7C01 /* xxGl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = xxGl.h; sourceTree = "<group>"; };
 		9D58D89B1DB2CCD8007AEECB /* libGLEW.2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.2.0.0.dylib; path = ../../../../../usr/local/Cellar/glew/2.0.0/lib/libGLEW.2.0.0.dylib; sourceTree = "<group>"; };
 		9D58D89D1DB2CE08007AEECB /* libglfw3.3.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.3.2.dylib; path = ../../../../../usr/local/Cellar/glfw3/3.2.1/lib/libglfw3.3.2.dylib; sourceTree = "<group>"; };
+		9D6FEB431DB4D7C3009EAF56 /* hello.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; path = hello.cl; sourceTree = "<group>"; };
 		9DAE23B31DB2C40D00740E93 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -83,7 +83,8 @@
 		9D0EFD851DB012AE00303CB4 = {
 			isa = PBXGroup;
 			children = (
-				9D0EFD901DB012AF00303CB4 /* opencl-xcode */,
+				9D0EFD9B1DB0187700303CB4 /* cl */,
+				9D0EFD901DB012AF00303CB4 /* src */,
 				9D0EFD8F1DB012AF00303CB4 /* Products */,
 				9D0EFD9E1DB018DE00303CB4 /* Frameworks */,
 			);
@@ -92,15 +93,14 @@
 		9D0EFD8F1DB012AF00303CB4 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				9D0EFD8E1DB012AF00303CB4 /* opencl-xcode */,
+				9D0EFD8E1DB012AF00303CB4 /* gi */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		9D0EFD901DB012AF00303CB4 /* opencl-xcode */ = {
+		9D0EFD901DB012AF00303CB4 /* src */ = {
 			isa = PBXGroup;
 			children = (
-				9D0EFD9B1DB0187700303CB4 /* kernels */,
 				9D0EFD911DB012AF00303CB4 /* main.c */,
 				9D43BB061DB359DA003A7C01 /* glfw.c */,
 				9D43BB071DB359DA003A7C01 /* glfw.h */,
@@ -111,15 +111,15 @@
 				9D43BB101DB36810003A7C01 /* xxGl.c */,
 				9D43BB111DB36810003A7C01 /* xxGl.h */,
 			);
-			path = "opencl-xcode";
+			path = src;
 			sourceTree = "<group>";
 		};
-		9D0EFD9B1DB0187700303CB4 /* kernels */ = {
+		9D0EFD9B1DB0187700303CB4 /* cl */ = {
 			isa = PBXGroup;
 			children = (
-				9D0EFD9C1DB0188200303CB4 /* hello.cl */,
+				9D6FEB431DB4D7C3009EAF56 /* hello.cl */,
 			);
-			name = kernels;
+			path = cl;
 			sourceTree = "<group>";
 		};
 		9D0EFD9E1DB018DE00303CB4 /* Frameworks */ = {
@@ -137,9 +137,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		9D0EFD8D1DB012AE00303CB4 /* opencl-xcode */ = {
+		9D0EFD8D1DB012AE00303CB4 /* gi */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 9D0EFD951DB012AF00303CB4 /* Build configuration list for PBXNativeTarget "opencl-xcode" */;
+			buildConfigurationList = 9D0EFD951DB012AF00303CB4 /* Build configuration list for PBXNativeTarget "gi" */;
 			buildPhases = (
 				9D0EFD8A1DB012AE00303CB4 /* Sources */,
 				9D0EFD8B1DB012AE00303CB4 /* Frameworks */,
@@ -150,9 +150,9 @@
 			);
 			dependencies = (
 			);
-			name = "opencl-xcode";
-			productName = "opencl-xcode";
-			productReference = 9D0EFD8E1DB012AF00303CB4 /* opencl-xcode */;
+			name = gi;
+			productName = gi;
+			productReference = 9D0EFD8E1DB012AF00303CB4 /* gi */;
 			productType = "com.apple.product-type.tool";
 		};
 /* End PBXNativeTarget section */
@@ -170,7 +170,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 9D0EFD891DB012AE00303CB4 /* Build configuration list for PBXProject "opencl-xcode" */;
+			buildConfigurationList = 9D0EFD891DB012AE00303CB4 /* Build configuration list for PBXProject "gi" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
@@ -182,7 +182,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				9D0EFD8D1DB012AE00303CB4 /* opencl-xcode */,
+				9D0EFD8D1DB012AE00303CB4 /* gi */,
 			);
 		};
 /* End PBXProject section */
@@ -194,10 +194,10 @@
 			files = (
 				9D43BB121DB36810003A7C01 /* xxGl.c in Sources */,
 				9D43BB081DB359DA003A7C01 /* glfw.c in Sources */,
-				9D0EFD9D1DB0188200303CB4 /* hello.cl in Sources */,
 				9D43BB0D1DB35AD8003A7C01 /* xxCl.c in Sources */,
 				9D0EFD921DB012AF00303CB4 /* main.c in Sources */,
 				9D43BB0F1DB35BD5003A7C01 /* xxCommon.c in Sources */,
+				9D6FEB441DB4D7C3009EAF56 /* hello.cl in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -330,7 +330,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		9D0EFD891DB012AE00303CB4 /* Build configuration list for PBXProject "opencl-xcode" */ = {
+		9D0EFD891DB012AE00303CB4 /* Build configuration list for PBXProject "gi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9D0EFD931DB012AF00303CB4 /* Debug */,
@@ -339,7 +339,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		9D0EFD951DB012AF00303CB4 /* Build configuration list for PBXNativeTarget "opencl-xcode" */ = {
+		9D0EFD951DB012AF00303CB4 /* Build configuration list for PBXNativeTarget "gi" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				9D0EFD961DB012AF00303CB4 /* Debug */,
