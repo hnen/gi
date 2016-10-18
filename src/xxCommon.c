@@ -11,10 +11,9 @@
 #include <sys/stat.h>
 #include "xxCommon.h"
 
-int file_size(XXstring filename, size_t * out_size);
+int file_size(const char * filename, size_t * out_size);
 
-XXerr file_read(XXstring filename, XXstring * out_content, size_t * out_contentSize) {
-    /* Load the source code containing the kernel*/
+XXerr file_read(const char * filename, XXstring * out_content, size_t * out_contentSize) {
     FILE *fp;
     size_t fsize;
     
@@ -31,7 +30,7 @@ XXerr file_read(XXstring filename, XXstring * out_content, size_t * out_contentS
     return 0;
 }
 
-XXerr file_size(XXstring filename, size_t * out_size) {
+XXerr file_size(const char * filename, size_t * out_size) {
     struct stat st;
     if (stat(filename, &st) == 0) {
         *out_size = (size_t)st.st_size;

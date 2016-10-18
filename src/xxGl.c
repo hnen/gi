@@ -8,6 +8,8 @@
 
 #include "xxGl.h"
 
+XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_handle);
+
 XXerr gl_createShaderProgram(const char * vs_src, const char * fs_src, struct XXshaderprogram * out_program) {
     XX_E(gl_compileShader(GL_VERTEX_SHADER, vs_src, &out_program->vs));
     XX_E(gl_compileShader(GL_FRAGMENT_SHADER, fs_src, &out_program->fs));

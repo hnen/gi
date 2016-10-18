@@ -18,7 +18,7 @@ typedef char * XXstring;
 typedef void(* XXcallback)();
 typedef int XXerr;
 
-XXerr file_read(XXstring fileName, XXstring * out_content, size_t * out_contentSize);
+XXerr file_read(const char * fileName, XXstring * out_content, size_t * out_contentSize);
 XXstring xx_string(int len);
 
 #endif /* xxCommon_h */
