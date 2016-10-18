@@ -66,7 +66,7 @@ static void run() {
     void * data = xxalloc(W*H*4);
     createTextureData(data, W, H);
     gl_setTextureData(g_tex, W, H, data);
-    free(data);
+    xxfree(data);
     
     GL_E(glUseProgram(g_program.program));
     GL_E(glUniform1i(glGetUniformLocation(g_program.program, "tex"), 0));

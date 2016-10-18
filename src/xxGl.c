@@ -60,7 +60,7 @@ XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_hand
         char * str = (char*)xxalloc(loglength);
         GL_E(glGetShaderInfoLog(handle, loglength, &loglength, str));
         fprintf(stderr, "!!Error with shader compilation:\n%s\n", str);
-        free(str);
+        xxfree(str);
         
         GL_E(glDeleteShader(handle));
         

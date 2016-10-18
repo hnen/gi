@@ -22,7 +22,7 @@ XXerr obj_parse(const char * filename) {
 
   //obj_getData(content, "v", &vertexparser);
 
-  free(content);
+  xxfree(content);
     
   return 0;
 }

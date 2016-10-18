@@ -55,7 +55,7 @@ void cl_run() {
     ret = clReleaseMemObject(memobj);
     ret = clReleaseContext(context);
     
-    free(source_str);
+    xxfree(source_str);
     
 }
 
