@@ -12,13 +12,18 @@
 #include <stdio.h>
 
 #define XX_E(...) if((__VA_ARGS__)) { fprintf(stderr, "err @ %s(%s):%d", __func__, __FILE__, __LINE__); __builtin_trap(); }
-#define xxAlloc(...) malloc(__VA_ARGS__)
+
+#ifndef DEBUG
+#define xxalloc(...) malloc(__VA_ARGS__)
+#else
+#define xxalloc(...) __xxalloc(__VA_ARGS__)
+#endif
 
 typedef char * XXstring;
 typedef void(* XXcallback)();
 typedef int XXerr;
 
 XXerr file_read(const char * fileName, XXstring * out_content, size_t * out_contentSize);
-XXstring xx_string(int len);
+void * __xxalloc(size_t amount);
 
 #endif /* xxCommon_h */

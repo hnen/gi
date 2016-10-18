@@ -24,7 +24,7 @@ XXerr gl_createShaderProgram(const char * vs_src, const char * fs_src, struct XX
     if (link_status == GL_FALSE) {
         GLint info_len = -1;
         glGetProgramiv(prg, GL_INFO_LOG_LENGTH, &info_len);
-        char * str = (char*)xxAlloc(info_len);
+        char * str = (char*)xxalloc(info_len);
         glGetProgramInfoLog(prg, info_len, &info_len, str);
         fprintf(stderr, "!!Error with shader program linkage:\n%s\n", str);
         glDeleteProgram(prg);
@@ -57,7 +57,7 @@ XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_hand
         GLint loglength = -1;
         GL_E(glGetShaderiv(handle, GL_INFO_LOG_LENGTH, &loglength));
         
-        char * str = (char*)xxAlloc(loglength);
+        char * str = (char*)xxalloc(loglength);
         GL_E(glGetShaderInfoLog(handle, loglength, &loglength, str));
         fprintf(stderr, "!!Error with shader compilation:\n%s\n", str);
         free(str);

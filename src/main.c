@@ -63,7 +63,7 @@ static void run() {
     gl_createVAO(&vao);
     gl_createVBO(&vbo, vertex_data, sizeof(vertex_data));
     
-    void * data = xxAlloc(W*H*4);
+    void * data = xxalloc(W*H*4);
     createTextureData(data, W, H);
     gl_setTextureData(g_tex, W, H, data);
     free(data);

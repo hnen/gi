@@ -7,6 +7,7 @@
 //
 
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include "xxCommon.h"
@@ -20,7 +21,7 @@ XXerr file_read(const char * filename, XXstring * out_content, size_t * out_cont
     XX_E(!(fp = fopen(filename, "r")));
     XX_E(file_size(filename, &fsize));
     
-    char * buffer = (char*)xxAlloc(fsize+1);
+    char * buffer = (char*)xxalloc(fsize+1);
     size_t size = fread(buffer, 1, fsize, fp);
     fclose(fp);
     
@@ -41,4 +42,8 @@ XXerr file_size(const char * filename, size_t * out_size) {
     return 0;
 }
 
-
+void * __xxalloc(size_t amount) {
+    void * mem = malloc(amount);
+    memset(mem, 0xff, amount);
+    return mem;
+}
