@@ -15,7 +15,7 @@
 
 #ifndef DEBUG
 #define xxalloc(...) malloc(__VA_ARGS__)
-#define free(...) free(__VA_ARGS__)
+#define xxfree(...) free(__VA_ARGS__)
 #else
 #define xxalloc(...) __xxalloc(__VA_ARGS__)
 #define xxfree(...) __xxfree(__VA_ARGS__)
