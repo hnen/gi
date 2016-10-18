@@ -43,7 +43,12 @@ XXerr file_size(const char * filename, size_t * out_size) {
 }
 
 void * __xxalloc(size_t amount) {
+    printf("xxalloc %ld\n", amount);
     void * mem = malloc(amount);
     memset(mem, 0xff, amount);
     return mem;
+}
+
+void __xxfree(void * ptr) {
+    free(ptr);
 }

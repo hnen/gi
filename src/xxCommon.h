@@ -15,8 +15,10 @@
 
 #ifndef DEBUG
 #define xxalloc(...) malloc(__VA_ARGS__)
+#define free(...) free(__VA_ARGS__)
 #else
 #define xxalloc(...) __xxalloc(__VA_ARGS__)
+#define xxfree(...) __xxfree(__VA_ARGS__)
 #endif
 
 typedef char * XXstring;
@@ -25,5 +27,6 @@ typedef int XXerr;
 
 XXerr file_read(const char * fileName, XXstring * out_content, size_t * out_contentSize);
 void * __xxalloc(size_t amount);
+void __xxfree(void * ptr);
 
 #endif /* xxCommon_h */
