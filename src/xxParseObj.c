@@ -2,7 +2,12 @@
 #include <string.h>
 #include "xxCommon.h"
 
+typedef void(*datagettercallback)(const char * line, void * out_data);
+
 static void obj_countLines(const char * content, const char * linetype, int * out_linecount);
+static void obj_getData(const char * content, const char * linetype, datagettercallback datagetter);
+
+static void vertexparser(const char * line, void * out_data);
 
 XXerr obj_parse(const char * filename) {
   char * content;
@@ -15,25 +20,58 @@ XXerr obj_parse(const char * filename) {
   obj_countLines(content, "f", &normalcount);
   printf("obj %s verts: %d, normals: %d, faces: %d\n", filename, vertcount, normalcount, facecount);
 
+  //obj_getData(content, "v", &vertexparser);
+
   return 0;
 }
 
+static void vertexparser(const char * line, void * out_data) {
+  float * fdata = (float*)out_data;
+  sscanf(line, "%f %f %f", &fdata[0], &fdata[1], &fdata[2]);
+}
+
+int readnextline(const char ** ptr, char * out_cmd, char * out_content);
+
+static void obj_getData(const char * content, const char * linetype, datagettercallback datagetter) {
+
+}
+
+
 static void obj_countLines(const char * content, const char * linetype, int * out_linecount) {
   char buffer[128];
+  char cmd[16];
   int count = 0;
+  while(readnextline(&content, cmd, buffer)) {
+    if (strcmp(linetype, cmd) == 0) {
+      count++;
+    }
+  }
+  *out_linecount = count;
+}
+
+int readnextline(const char ** ptr, char * out_cmd, char * out_content) {
+  const char * content = *ptr;
+  if ((*content) == '\0') {
+    return 0;
+  }
   while ((*content) != '\0') {
     if ((*content) != '#') {
-      /* read word */
-      int i = 0;
+      char * c= out_cmd;
       while (*content != ' ') {
-        buffer[i++] = *content;
+        *(out_cmd++) = *(content++);
+      }
+      *out_cmd = 0;
+      while(*(++content) == ' ');
+      char *o = out_content;
+      while (*content != '\n' && *content != '\0') {
+        *(out_content++) = *(content++);
+      }
+      *out_content = 0;
+      while(*content == '\n')
         content++;
-      }
-      buffer[i] = '\0';
-      if (strcmp(buffer, linetype) == 0) {
-        count++;
-      }
-    } 
+      *ptr = content;
+      return 1;
+    }
     /* skip line */
     while(*content != '\n' && *content != '\0')
       content++;
@@ -41,8 +79,11 @@ static void obj_countLines(const char * content, const char * linetype, int * ou
       content++;
     }
   }
-  *out_linecount = count;
+  *ptr = content;
+  return 0;
 }
+
+
 
 
 
