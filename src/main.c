@@ -4,6 +4,7 @@
 #include "glfw.h"
 #include "xxCl.h"
 #include "xxGl.h"
+#include "xxParseObj.h"
 
 #define W 1024
 #define H (1024*9/16)
