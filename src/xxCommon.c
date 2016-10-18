@@ -20,9 +20,11 @@ XXerr file_read(const char * filename, XXstring * out_content, size_t * out_cont
     XX_E(!(fp = fopen(filename, "r")));
     XX_E(file_size(filename, &fsize));
     
-    char * buffer = (char*)xxAlloc(fsize);
+    char * buffer = (char*)xxAlloc(fsize+1);
     size_t size = fread(buffer, 1, fsize, fp);
     fclose(fp);
+    
+    buffer[fsize] = 0;
     
     *out_contentSize = size;
     *out_content = buffer;

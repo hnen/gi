@@ -13,7 +13,7 @@ XXerr obj_parse(const char * filename) {
   char * content;
   size_t contentSize;
   file_read(filename, &content, &contentSize);
-
+    
   int vertcount = -1, facecount = -1, normalcount = -1;
   obj_countLines(content, "v", &vertcount);
   obj_countLines(content, "vn", &facecount);
@@ -22,6 +22,8 @@ XXerr obj_parse(const char * filename) {
 
   //obj_getData(content, "v", &vertexparser);
 
+  free(content);
+    
   return 0;
 }
 
@@ -56,18 +58,16 @@ int readnextline(const char ** ptr, char * out_cmd, char * out_content) {
   }
   while ((*content) != '\0') {
     if ((*content) != '#') {
-      char * c= out_cmd;
       while (*content != ' ') {
         *(out_cmd++) = *(content++);
       }
       *out_cmd = 0;
       while(*(++content) == ' ');
-      char *o = out_content;
       while (*content != '\n' && *content != '\0') {
         *(out_content++) = *(content++);
       }
       *out_content = 0;
-      while(*content == '\n')
+      while((*content) == '\n')
         content++;
       *ptr = content;
       return 1;
