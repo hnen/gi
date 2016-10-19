@@ -10,6 +10,7 @@
 #define xxCommon_h
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #define XX_E(...) if((__VA_ARGS__)) { fprintf(stderr, "err @ %s(%s):%d", __func__, __FILE__, __LINE__); __builtin_trap(); }
 

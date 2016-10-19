@@ -34,16 +34,18 @@ static void createTextureData(char * out_data, int w, int h);
 
 
 static void init() {
+  XXobj obj;
+  obj_parse("./data/kuutiot.obj", &obj);
+  obj_printf(&obj);
 
-    obj_parse("./data/kuutiot.obj");
 
-    XX_E(gl_createShaderProgram(vertex_shader, fragment_shader, &g_program));
-    gl_createTexture(GL_CLAMP_TO_EDGE, GL_LINEAR, &g_tex);
+  XX_E(gl_createShaderProgram(vertex_shader, fragment_shader, &g_program));
+  gl_createTexture(GL_CLAMP_TO_EDGE, GL_LINEAR, &g_tex);
 }
 
 static void release() {
-    XX_E(gl_releaseShaderProgram(g_program));
-    gl_deleteTexture(g_tex);
+  XX_E(gl_releaseShaderProgram(g_program));
+  gl_deleteTexture(g_tex);
 }
 
 static void run() {
