@@ -6,7 +6,7 @@
 //  Copyright © 2016 Harri Hätinen. All rights reserved.
 //
 
-#include "xxGl.h"
+#include "gl.h"
 
 XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_handle);
 

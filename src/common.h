@@ -6,8 +6,8 @@
 //  Copyright © 2016 Harri Hätinen. All rights reserved.
 //
 
-#ifndef xxCommon_h
-#define xxCommon_h
+#ifndef __COMMON_H
+#define __COMMON_H
 
 #include <stdio.h>
 #include <stdlib.h>

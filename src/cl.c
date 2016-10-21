@@ -6,8 +6,8 @@
 //  Copyright © 2016 Harri Hätinen. All rights reserved.
 //
 
-#include "xxCommon.h"
-#include "xxCl.h"
+#include "common.h"
+#include "cl.h"
 
 void cl_run() {
     cl_context context = NULL;

@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
-#include "xxCommon.h"
+#include "common.h"
 
 int file_size(const char * filename, size_t * out_size);
 

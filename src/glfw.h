@@ -9,7 +9,7 @@
 #ifndef glfw_h
 #define glfw_h
 
-#include "xxCommon.h"
+#include "common.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>

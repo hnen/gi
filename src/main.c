@@ -2,9 +2,9 @@
 #include <stdlib.h>
 
 #include "glfw.h"
-#include "xxCl.h"
-#include "xxGl.h"
-#include "xxParseObj.h"
+#include "cl.h"
+#include "gl.h"
+#include "parseobj.h"
 
 #define W 1024
 #define H (1024*9/16)
@@ -84,7 +84,7 @@ static void createTextureData(char * out_data, int w, int h) {
     for(int y = 0; y < h; y++) {
         for(int x = 0; x < w; x++) {
             for (int c = 0; c < 4; c++) {
-                *(out_data++) = rand() & 0xff;
+                *(out_data++) = x^y;
             }
         }
     }

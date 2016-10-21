@@ -6,13 +6,13 @@
 //  Copyright © 2016 Harri Hätinen. All rights reserved.
 //
 
-#ifndef xxGl_h
-#define xxGl_h
+#ifndef __GL_H
+#define __GL_H
 
 #include <stdlib.h>
 #include <stdio.h>
 #include "glfw.h"
-#include "xxCommon.h"
+#include "common.h"
 
 #define GL_E(...) { __VA_ARGS__; gl_handleErrors(__FILE__, __LINE__, #__VA_ARGS__); }
 //#define GL_E(...) { __VA_ARGS__; gl_handleErrors(__FILE__, __LINE__, ""); }
