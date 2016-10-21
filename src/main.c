@@ -4,7 +4,7 @@
 #include "glfw.h"
 #include "cl.h"
 #include "gl.h"
-#include "parseobj.h"
+#include "obj.h"
 
 #define W 1024
 #define H (1024*9/16)

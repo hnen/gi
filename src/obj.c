@@ -1,7 +1,7 @@
 
 #include <string.h>
 #include "common.h"
-#include "parseobj.h"
+#include "obj.h"
 
 typedef void(*datagettercallback)(const char * line, XXobj * tgt_struct);
 
