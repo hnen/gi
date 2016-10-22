@@ -17,6 +17,7 @@ typedef struct {
 } XXobj;
 
 XXerr obj_parse(const char * filename, XXobj * out_obj);
+void obj_printf(XXobj * obj);
 void obj_release(XXobj * obj);
 
 #endif

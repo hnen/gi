@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "glfw.h"
 #include "cl.h"
 #include "gl.h"
 #include "obj.h"
 #include "isect.h"
+#include "scene.h"
 
 #define W 1024
 #define H ((W)*9/16)
@@ -34,18 +36,24 @@ XXobj g_obj;
 
 static void createTextureData(char * out_data, int w, int h);
 static void renderScene(const XXobj * obj, char * out_data, int w, int h, float t);
+static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, const XXscene * scene);
+static void allocrandomscene(int obj_count, XXscene * out_scene);
 
+XXscene scene;
 
 static void init() {
-  obj_parse("./data/kuutio.obj", &g_obj);
+  obj_parse("./data/kuutiot.obj", &g_obj);
   obj_printf(&g_obj);
 
+  srand(time(0));
+  allocrandomscene(10, &scene);
 
   XX_E(gl_createShaderProgram(vertex_shader, fragment_shader, &g_program));
   gl_createTexture(GL_CLAMP_TO_EDGE, GL_LINEAR, &g_tex);
 }
 
 static void release() {
+  scene_free(scene);
   XX_E(gl_releaseShaderProgram(g_program));
   gl_deleteTexture(g_tex);
 }
@@ -93,14 +101,11 @@ static void createTextureData(char * out_data, int w, int h) {
     }
 }
 
-static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, XXobj * obj);
 
 static void renderScene(const XXobj * obj, char * out_data, int w, int h, float t) {
 
-  vec3 cam_p = {sinf(t) * 5.0f, 3, cosf(t) * 5.0f};
-  vec3 cam_dst = {0, 0, 0};
-  //vec3 cam_d = {0, -1, 1};
-  //vec3 cam_d = {-1, -1, 1};
+  vec3 cam_p = {sinf(t) * 10.0f, 1.7f, cosf(t) * 10.0f};
+  vec3 cam_dst = {0, 0.0f, 0};
   vec3 cam_d = vec3_sub(cam_dst, cam_p);
   vec3_normalize(&cam_d);
 
@@ -121,27 +126,16 @@ static void renderScene(const XXobj * obj, char * out_data, int w, int h, float 
         vec3 r_d = vec3_add(cam_d, vec3_add(i, j));
         vec3_normalize(&r_d);
 
-        *(buf++) = evalpixel(cam_p, r_d, cam_d, obj);
+        *(buf++) = evalpixel(cam_p, r_d, cam_d, &scene);
       }
     }
 }
 
-static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, XXobj * obj) { 
+static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, const XXscene * scene) { 
   vec3 pos, nrm;
-  /*
-  int i = ((int)(glfwGetTime() * 10.0f)) % obj->f_count;
-  int i0 = obj->f_ind[i*3+0];
-  int i1 = obj->f_ind[i*3+1];
-  int i2 = obj->f_ind[i*3+2];
-  vec3 p0 = obj->v_pos[i0];
-  vec3 p1 = obj->v_pos[i1];
-  vec3 p2 = obj->v_pos[i2]; 
-  float x;
-  if (isect_tri(p0, p1, p2, r_p, r_d, &x)) {
-  */
-  if (isect_obj(obj, r_p, r_d, &pos, &nrm)) {
-    float f = fabsf(vec3_dot(nrm, cam_d));
-    //float f = 1.0f;
+  if (isect_scene(scene, r_p, r_d, &pos, &nrm)) {
+    float nd = vec3_dot(nrm, cam_d);
+    float f = (-nd);
     unsigned char f_c = (unsigned char)(clamp(f) * 255);
     return f_c | (f_c << 8) | (f_c << 16);
   } else {
@@ -150,20 +144,32 @@ static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, XXobj * obj
 }
 
 /*
-static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d){ 
-  vec3 s_p = {0, 2, 15};
-  float s_r = 10;
-  vec3 ipos0, inorm0, ipos1, inorm1;
-  if (isect_sphere(s_p, s_r, r_p, r_d, &ipos0, &inorm0, &ipos1, &inorm1)) {
-    vec3_normalize(&inorm0);
-    float f = (fabsf(vec3_dot(inorm0, cam_d)));
-    unsigned char f_c = (unsigned char)(f * 255);
+static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, const XXobj * obj) { 
+  vec3 pos, nrm;
+  if (isect_obj(obj, r_p, r_d, &pos, &nrm)) {
+    float f = (-vec3_dot(nrm, cam_d)) + 0.2f;
+    unsigned char f_c = (unsigned char)(clamp(f) * 255);
     return f_c | (f_c << 8) | (f_c << 16);
   } else {
     return 0;
   }
 }
 */
+
+static void allocrandomscene(int obj_count, XXscene * out_scene) {
+  *out_scene = scene_alloc(obj_count);
+  XXmat objmat = { .col_albd={1,1,1}, .col_emit={0,0,0} };
+  XXmat litmat = { .col_albd={0,0,0}, .col_emit={1,1,1} };
+  for (int i = 0; i < obj_count; i++) {
+    XXsceneobj obj = {
+      .p={(randf() - 0.5f) * 7.5f, (randf() - 0.5f) * 7.5f, (randf() - 0.5f) * 7.5f},
+      .r=randf()*0.5f+1.0f,
+      .mat = i < obj_count-1 ? objmat : litmat
+    };
+    out_scene->objs[i] = obj;
+  }
+
+}
 
 int main() {
     

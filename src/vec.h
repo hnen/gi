@@ -11,6 +11,7 @@ typedef struct {
   float x, y;
 } vec2;
 
+static inline vec3 _vec3(float x, float y, float z) { vec3 r = {x, y, z}; return r; }
 static inline vec3 vec3_add(vec3 a, vec3 b) { vec3 r = {a.x+b.x,a.y+b.y,a.z+b.z}; return r; }
 static inline vec3 vec3_sub(vec3 a, vec3 b) { vec3 r = {a.x-b.x,a.y-b.y,a.z-b.z}; return r; }
 static inline vec3 vec3_mul(vec3 a, float x) { vec3 r = {a.x*x,a.y*x,a.z*x}; return r; }

@@ -22,6 +22,8 @@
 #define xxfree(...) __xxfree(__VA_ARGS__)
 #endif
 
+#define randf() ((float)((double)rand() / (double)RAND_MAX))
+
 typedef char * XXstring;
 typedef void(* XXcallback)();
 typedef int XXerr;

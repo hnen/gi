@@ -6,7 +6,31 @@
 #include "obj.h"
 #include "isect.h"
 
-int isect_obj(XXobj * obj, vec3 r_p, vec3 r_d, vec3 * out_ipos, vec3 * out_inorm) {
+int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, vec3 * out_ipos, vec3 * out_inorm) {
+    float min_t = FLT_MAX;
+    int min_i = -1;
+    for(int i = 0; i < scene->obj_count; i++) {
+        XXsceneobj * obj = &scene->objs[i];
+        float t;
+        if (isect_sphere(obj->p, obj->r, r_p, r_d, &t)) {
+            if (t < min_t) {
+                min_t = t;
+                min_i = i;
+            }
+        }
+    }
+    if (min_i >= 0) {
+        *out_ipos = vec3_add(r_p, vec3_mul(r_d, min_t)); 
+        *out_inorm = vec3_sub(*out_ipos, scene->objs[min_i].p);
+        vec3_normalize(out_inorm);
+        return 1;
+    } else {
+        return 0;
+    }
+    
+}
+
+int isect_obj(const XXobj * obj, vec3 r_p, vec3 r_d, vec3 * out_ipos, vec3 * out_inorm) {
     float min_t = FLT_MAX;
     int min_i = -1;
     for(int i = 0; i < obj->f_count; i++) {
@@ -21,7 +45,7 @@ int isect_obj(XXobj * obj, vec3 r_p, vec3 r_d, vec3 * out_ipos, vec3 * out_inorm
         p2 = obj->v_pos[i2]; 
         if (isect_tri(p0, p1, p2, r_p, r_d, &t)) {
             if (t < min_t) {
-                t = min_t;
+                min_t = t;
                 min_i = i;
             }
         }
@@ -37,7 +61,7 @@ int isect_obj(XXobj * obj, vec3 r_p, vec3 r_d, vec3 * out_ipos, vec3 * out_inorm
         p0 = obj->v_pos[i0];
         p1 = obj->v_pos[i1];
         p2 = obj->v_pos[i2]; 
-        *out_inorm = vec3_cross(vec3_sub(p2, p0), vec3_sub(p1, p0));
+        *out_inorm = vec3_cross(vec3_sub(p1, p0), vec3_sub(p2, p0));
         vec3_normalize(out_inorm);
 
         //*out_inorm = obj->f_nrm[min_i];
@@ -83,17 +107,19 @@ int isect_tri(vec3 t_p0, vec3 t_p1, vec3 t_p2, vec3 r_p, vec3 r_d, float * out_t
     }
 }
 
-int isect_sphere(vec3 s_p, float s_r, vec3 r_p, vec3 r_d, vec3 * out_ipos0, vec3 * out_inorm0, vec3 * out_ipos1, vec3 * out_inorm1) {
+int isect_sphere(vec3 s_p, float s_r, vec3 r_p, vec3 r_d, float * out_t) {
 
     float a = vec3_dot(r_d, r_d);
     vec3 oc = vec3_sub(r_p, s_p);
-    float b = -2.0f * vec3_dot(r_d, oc);
+    float b = 2.0f * vec3_dot(r_d, oc);
     float c = vec3_dot(oc, oc) - s_r * s_r;
 
     float det = b*b - 4*a*c;
     if (det >= 0) {
         float sdet = sqrtf(det);
         float t0 = (-b - sqrtf(det)) / (2.0f * a);
+        *out_t = t0;
+        /*
         float t1 = (-b + sqrtf(det)) / (2.0f * a);
         vec3 p0 = vec3_add(r_p, vec3_mul(r_d, t0));
         vec3 p1 = vec3_add(r_p, vec3_mul(r_d, t1));
@@ -105,6 +131,7 @@ int isect_sphere(vec3 s_p, float s_r, vec3 r_p, vec3 r_d, vec3 * out_ipos0, vec3
         *out_ipos1 = p1;
         *out_inorm0 = n0;
         *out_inorm1 = n1;
+        */
         return 1;
     } else {
         return 0;
