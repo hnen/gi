@@ -2,6 +2,7 @@
 #ifndef __XXPARSEOBJ_H
 #define __XXPARSEOBJ_H
 
+#include "common.h"
 #include "vec.h"
 
 typedef struct {

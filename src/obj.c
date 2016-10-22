@@ -59,8 +59,8 @@ static void faceparser(const char * line, XXobj * target_struct) {
   int * f = &target_struct->f_ind[i];
   int n0, n1, n2, n3, nn;
   sscanf(line, "%d//%d %d//%d %d//%d %d//%d", &n0, &nn, &n1, &nn, &n2, &nn, &n3, &nn);
-  f[0] = n0; f[1] = n1; f[2] = n2;
-  f[3] = n2; f[4] = n3; f[5] = n0;
+  f[0] = n0-1; f[1] = n1-1; f[2] = n2-1;
+  f[3] = n2-1; f[4] = n3-1; f[5] = n0-1;
 }
 
 int readnextline(const char ** ptr, char * out_cmd, char * out_content);

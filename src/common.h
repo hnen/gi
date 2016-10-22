@@ -30,4 +30,6 @@ XXerr file_read(const char * fileName, XXstring * out_content, size_t * out_cont
 void * __xxalloc(size_t amount);
 void __xxfree(void * ptr);
 
+static inline float clamp(float f) { return f < 0 ? 0 : (f > 1 ? 1 : f); }
+
 #endif /* xxCommon_h */
