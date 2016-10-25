@@ -12,7 +12,7 @@ typedef struct {
 
 typedef struct {
     vec3 p;
-    float r;
+    xxfloat r;
     XXmat mat;
 } XXsceneobj;
 

@@ -22,7 +22,9 @@
 #define xxfree(...) __xxfree(__VA_ARGS__)
 #endif
 
-#define randf() ((float)((double)rand() / (double)RAND_MAX))
+#define xxfloat float
+
+#define randf() ((xxfloat)((double)rand() / (double)RAND_MAX))
 
 typedef char * XXstring;
 typedef void(* XXcallback)();
@@ -32,6 +34,6 @@ XXerr file_read(const char * fileName, XXstring * out_content, size_t * out_cont
 void * __xxalloc(size_t amount);
 void __xxfree(void * ptr);
 
-static inline float clamp(float f) { return f < 0 ? 0 : (f > 1 ? 1 : f); }
+static inline xxfloat clamp(xxfloat f) { return f < 0 ? 0 : (f > 1 ? 1 : f); }
 
 #endif /* xxCommon_h */

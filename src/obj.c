@@ -43,14 +43,22 @@ static void vertexparser(const char * line, XXobj * target_struct) {
   int i = target_struct->v_count;
   target_struct->v_count++;
   vec3 * v = &target_struct->v_pos[i];
-  sscanf(line, "%f %f %f", &v->x, &v->y, &v->z);
+  float x, y, z;
+  sscanf(line, "%f %f %f", &x, &y, &z);
+  v->x = (xxfloat)x;
+  v->y = (xxfloat)y;
+  v->z = (xxfloat)z;
 }
 
 static void normalparser(const char * line, XXobj * target_struct) {
   int i = target_struct->f_nrm_count;
   target_struct->f_nrm_count++;
   vec3 * v = &target_struct->f_nrm[i];
-  sscanf(line, "%f %f %f", &v->x, &v->y, &v->z);
+  float x, y, z;
+  sscanf(line, "%f %f %f", &x, &y, &z);
+  v->x = (xxfloat)x;
+  v->y = (xxfloat)y;
+  v->z = (xxfloat)z;
 }
 
 static void faceparser(const char * line, XXobj * target_struct) {
