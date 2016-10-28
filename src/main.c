@@ -53,19 +53,21 @@ struct XXshaderprogram g_program;
 GLuint g_tex;
 XXobj g_obj;
 
-static void createTextureData(char * out_data, int w, int h);
-static void renderScene(const XXscene * scene, char * out_data, int w, int h, xxfloat t);
-static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, const XXscene * scene);
-static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth, int * out_noisect);
+static void render_scene(const XXscene * scene, char * out_data, int w, int h, xxfloat t);
 static inline float isect_scene_len(const XXscene * scene, vec3 r_p, vec3 r_d);
 static inline vec3 genhemisray(vec3 nitnrm);
 static inline vec3 pickspherepos();
 static void allocrandomscene(int obj_count, XXscene * out_scene);
-static void emitlightrays(const XXscene * scene, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h);
-static void emitray(vec3 r_p, vec3 r_d, XXsceneobj * emitter, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h);
+static void cast_rays_from_emitters(const XXscene * scene, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h);
+static void emit_rnd_ray_from_object(const XXscene * scene, int obj_i, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h);
+static void emitray(vec3 r_p, vec3 r_d, const XXscene * scene, const XXsceneobj * emitter, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h);
 static int is_occluded(const XXscene * scene, vec3 cam_pos, vec3 test_pos);
 static int project_to_camera(vec3 cam_p, vec3 cam_d, vec3 wld_u, vec3 p, float * out_x, float * out_y, float aspect);
-static int cast_hit_to_screen(vec3 hitpos, vec3 cam_p, vec3 cam_d, const XXscene * scene, unsigned int * out_data, int w, int h);
+static void cast_hit_to_screen(vec3 hitpos, vec3 cam_p, vec3 cam_d, const XXscene * scene, unsigned int * out_data, int w, int h);
+
+// obsolete unidirectional pathtracing funcs
+static inline unsigned int cast_ray_from_camera(vec3 r_p, vec3 r_d, vec3 cam_d, const XXscene * scene);
+static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth, int * out_noisect);
 
 XXscene g_scene;
 
@@ -104,7 +106,7 @@ static void run() {
     gl_createVBO(&vbo, vertex_data, sizeof(vertex_data));
 
     void * data = xxalloc(SCR_W*SCR_H*4);
-    renderScene(&g_scene, data, SCR_W, SCR_H, glfwGetTime());
+    render_scene(&g_scene, data, SCR_W, SCR_H, glfwGetTime());
     gl_setTextureData(g_tex, SCR_W, SCR_H, data);
     xxfree(data);
 
@@ -119,7 +121,7 @@ static void run() {
 }
 
 
-static void renderScene(const XXscene * scene, char * out_data, int w, int h, xxfloat t) {
+static void render_scene(const XXscene * scene, char * out_data, int w, int h, xxfloat t) {
 
     scene->objs[0].p = _vec3(sinf(t) * 4.0f, 3.0f + sinf(t*0.2f) * 2.0f, cosf(t*1.5f)*4.0f);
 
@@ -140,9 +142,7 @@ static void renderScene(const XXscene * scene, char * out_data, int w, int h, xx
     unsigned int * buf = (unsigned int*)out_data;
 
     memset(buf, 0, w*h*4);
-
-    int nodecount = 0;
-    emitlightrays(scene, cam_p, cam_d, buf, w, h);
+    cast_rays_from_emitters(scene, cam_p, cam_d, buf, w, h);
 
     /*
     for(int y = 0; y < h; y++) {
@@ -153,7 +153,7 @@ static void renderScene(const XXscene * scene, char * out_data, int w, int h, xx
             vec3 r_d = vec3_add(cam_d, vec3_add(i, j));
             vec3_normalize(&r_d);
 
-            *(buf++) = evalpixel(cam_p, r_d, cam_d, &g_scene, emitnodesarr, nodecount);
+            *(buf++) = cast_ray_from_camera(cam_p, r_d, cam_d, &g_scene, emitnodesarr, nodecount);
         }
     }
     */
@@ -161,7 +161,7 @@ static void renderScene(const XXscene * scene, char * out_data, int w, int h, xx
 
 static float * alloc_object_ray_emit_factors_cumulative(const XXscene * scene);
 
-static void emitlightrays(const XXscene * scene, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h) {
+static void cast_rays_from_emitters(const XXscene * scene, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h) {
     float * emit_f = alloc_object_ray_emit_factors_cumulative(scene);
     int obj_i = 0;
     double ity_i = 0.0f;
@@ -172,14 +172,18 @@ static void emitlightrays(const XXscene * scene, vec3 cam_p, vec3 cam_d, unsigne
             obj_i++;
         }
         //obj_i = rand()%scene->obj_count;
-        XXsceneobj * obj = &scene->objs[obj_i];
-        vec3 r_p = vec3_add(vec3_mul(pickspherepos(), obj->r), obj->p);
-        vec3 r_d = vec3_sub(r_p, obj->p);
-        vec3_normalize(&r_d);
-        r_d = genhemisray(r_d);
-        emitray(r_p, r_d, obj, cam_p, cam_d, out_data, w, h);
+        emit_rnd_ray_from_object(scene, obj_i, cam_p, cam_d, out_data, w, h);
     }
     xxfree(emit_f);
+}
+
+static void emit_rnd_ray_from_object(const XXscene * scene, int obj_i, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h) {
+    XXsceneobj * obj = &scene->objs[obj_i];
+    vec3 r_p = vec3_add(vec3_mul(pickspherepos(), obj->r), obj->p);
+    vec3 r_d = vec3_sub(r_p, obj->p);
+    vec3_normalize(&r_d);
+    r_d = genhemisray(r_d);
+    emitray(r_p, r_d, scene, obj, cam_p, cam_d, out_data, w, h);
 }
 
 static float * alloc_object_ray_emit_factors_cumulative(const XXscene * scene) {
@@ -196,26 +200,26 @@ static float * alloc_object_ray_emit_factors_cumulative(const XXscene * scene) {
 }
 
 
-static void emitray(vec3 r_p, vec3 r_d, XXsceneobj * emitter, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h) {
+static void emitray(vec3 r_p, vec3 r_d, const XXscene * scene, const XXsceneobj * emitter, vec3 cam_p, vec3 cam_d, unsigned int * out_data, int w, int h) {
     vec3 raycol = emitter->mat.col_emit;
-    cast_hit_to_screen(r_p, cam_p, cam_d, &g_scene, out_data, w, h);
+    cast_hit_to_screen(r_p, cam_p, cam_d, scene, out_data, w, h);
     for (int i = 0; i < RAY_DEPTH; i++) {
         vec3 hitpos, hitnrm;
         XXsceneobj * hitobj = 0;
-        if (isect_scene(&g_scene, r_p, r_d, &hitobj, &hitpos, &hitnrm)) {
+        if (isect_scene(scene, r_p, r_d, &hitobj, &hitpos, &hitnrm)) {
             vec3 obj_albd = hitobj->mat.col_albd;
             raycol = _vec3(raycol.x * obj_albd.x, raycol.y * obj_albd.y, raycol.z * obj_albd.z);
             raycol = vec3_add(raycol, hitobj->mat.col_emit);
             r_p = hitpos;
             r_d = genhemisray(hitnrm);
-            cast_hit_to_screen(hitpos, cam_p, cam_d, &g_scene, out_data, w, h);
+            cast_hit_to_screen(hitpos, cam_p, cam_d, scene, out_data, w, h);
         } else {
             break;
         }
     }
 }
 
-static int cast_hit_to_screen(vec3 hitpos, vec3 cam_p, vec3 cam_d, const XXscene * scene, unsigned int * out_data, int w, int h) {
+static void cast_hit_to_screen(vec3 hitpos, vec3 cam_p, vec3 cam_d, const XXscene * scene, unsigned int * out_data, int w, int h) {
     if (!is_occluded(scene, cam_p, hitpos)) {
         float scr_x = NAN, scr_y = NAN;
         if (project_to_camera(cam_p, cam_d, _vec3(0,1,0), hitpos, &scr_x, &scr_y, (float)SCR_W/SCR_H)) {
@@ -275,42 +279,6 @@ static int project_to_camera(vec3 cam_p, vec3 cam_d, vec3 wld_u, vec3 p, float *
     *out_x = vec3_dot(pc, cam_l);
     *out_y = vec3_dot(pc, cam_u);
     */
-}
-
-static inline unsigned int evalpixel(vec3 r_p, vec3 r_d, vec3 cam_d, const XXscene * scene) { 
-    vec3 pos, nrm;
-    vec3 c = _vec3(0,0,0);
-    int isec = 0;
-    for (int i = 0; i < SAMPLES_PER_PIXEL && !isec; i++) {
-        c = vec3_add(c, computeradiance(r_p, r_d, scene, 0, &isec));
-    }
-    c = vec3_mul(c, 1.0f / SAMPLES_PER_PIXEL);
-    xxfloat f = (c.x+c.y+c.z) / 3.0f;
-    unsigned char f_r = (unsigned char)(clamp(c.x) * 255);
-    unsigned char f_g = (unsigned char)(clamp(c.y) * 255);
-    unsigned char f_b = (unsigned char)(clamp(c.z) * 255);
-    return f_r | (f_g << 8) | (f_b << 16);
-}
-
-static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth, int * out_noisect) {
-    if (depth > RAY_DEPTH) {
-        return _vec3(0,0,0);
-    }
-    vec3 hitpos, hitnrm;
-    XXsceneobj * hitobj = 0;
-    if (isect_scene(scene, r_p, r_d, &hitobj, &hitpos, &hitnrm)) {
-        vec3 emit = hitobj->mat.col_emit;
-        vec3 albd = hitobj->mat.col_albd;
-        vec3 rad = _vec3(0,0,0);
-        vec3 nr = genhemisray(hitnrm);
-        rad = computeradiance(hitpos, nr, scene, depth+1, out_noisect);
-        rad = _vec3(rad.x * albd.x, rad.y * albd.y, rad.z * albd.z);
-        return vec3_add(emit, rad);
-    }
-    if (depth == 0) {
-        *out_noisect = 1;
-    }
-    return _vec3(0,0,0);
 }
 
 static inline float isect_scene_len(const XXscene * scene, vec3 r_p, vec3 r_d) {
@@ -423,6 +391,43 @@ int main() {
 }
 
 
+// VVVV --- Obsolete unidirectional path tracing stuff
+
+static inline unsigned int cast_ray_from_camera(vec3 r_p, vec3 r_d, vec3 cam_d, const XXscene * scene) { 
+    vec3 pos, nrm;
+    vec3 c = _vec3(0,0,0);
+    int isec = 0;
+    for (int i = 0; i < SAMPLES_PER_PIXEL && !isec; i++) {
+        c = vec3_add(c, computeradiance(r_p, r_d, scene, 0, &isec));
+    }
+    c = vec3_mul(c, 1.0f / SAMPLES_PER_PIXEL);
+    xxfloat f = (c.x+c.y+c.z) / 3.0f;
+    unsigned char f_r = (unsigned char)(clamp(c.x) * 255);
+    unsigned char f_g = (unsigned char)(clamp(c.y) * 255);
+    unsigned char f_b = (unsigned char)(clamp(c.z) * 255);
+    return f_r | (f_g << 8) | (f_b << 16);
+}
+
+static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth, int * out_noisect) {
+    if (depth > RAY_DEPTH) {
+        return _vec3(0,0,0);
+    }
+    vec3 hitpos, hitnrm;
+    XXsceneobj * hitobj = 0;
+    if (isect_scene(scene, r_p, r_d, &hitobj, &hitpos, &hitnrm)) {
+        vec3 emit = hitobj->mat.col_emit;
+        vec3 albd = hitobj->mat.col_albd;
+        vec3 rad = _vec3(0,0,0);
+        vec3 nr = genhemisray(hitnrm);
+        rad = computeradiance(hitpos, nr, scene, depth+1, out_noisect);
+        rad = _vec3(rad.x * albd.x, rad.y * albd.y, rad.z * albd.z);
+        return vec3_add(emit, rad);
+    }
+    if (depth == 0) {
+        *out_noisect = 1;
+    }
+    return _vec3(0,0,0);
+}
 
 
 
