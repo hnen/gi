@@ -18,7 +18,7 @@ int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj
         if (obj->objtype == SPHERE) {
             if (isect_sphere(obj->sphere.p, obj->sphere.r, r_p, r_d, &t)) {
                 if (t < min_t) {
-                    min_norm = vec3_sub(vec3_add(r_p, vec3_mul(r_d, t)), scene->objs[min_i].sphere.p);
+                    min_norm = vec3_sub(vec3_add(r_p, vec3_mul(r_d, t)), scene->objs[i].sphere.p);
                     min_t = t;
                     min_i = i;
                 }
@@ -39,7 +39,7 @@ int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj
     }
     if (min_i >= 0) {
         *out_ipos = vec3_add(r_p, vec3_mul(r_d, min_t)); 
-        *out_inorm = vec3_sub(*out_ipos, scene->objs[min_i].sphere.p);
+        *out_inorm = min_norm;
         *out_obj = &scene->objs[min_i];
         vec3_normalize(out_inorm);
         return 1;
@@ -208,6 +208,8 @@ int isect_box(vec3 b_p, vec3 b_a0, vec3 b_a1, vec3 b_a2, vec3 r_p, vec3 r_d, int
         }
         *out_t = tmax2;
     }
+
+    vec3_normalize(out_inorm);
 
     return 1;
 }

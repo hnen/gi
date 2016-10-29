@@ -31,17 +31,24 @@ typedef struct {
 typedef struct {
     int obj_count;
     XXsceneobj * objs;
+
+    int * emitter_objs;
+    int emitter_objs_count;
 } XXscene;
 
 static inline XXscene scene_alloc(int objcount) {
     XXscene s = {
-        objcount, (XXsceneobj*)xxalloc(objcount * sizeof(XXsceneobj))
+        .obj_count = objcount,
+        .objs = (XXsceneobj*)xxalloc(objcount * sizeof(XXsceneobj)),
+        .emitter_objs = (int*)xxalloc(objcount * sizeof(int)),
+        .emitter_objs_count = 0
     };
     return s;
 }
 
 static inline void scene_free(XXscene scene) {
     xxfree(scene.objs);
+    xxfree(scene.emitter_objs);
 }
 
 static inline XXsceneobj _sceneobj_sphere(vec3 p, float r, XXmat mat) {
