@@ -3,25 +3,43 @@
 
 #include <float.h>
 
+#include "common.h"
 #include "obj.h"
+#include "scene.h"
 #include "isect.h"
 
 int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj, vec3 * out_ipos, vec3 * out_inorm) {
     xxfloat min_t = FLT_MAX;
     int min_i = -1;
+    vec3 min_norm;
     for(int i = 0; i < scene->obj_count; i++) {
         XXsceneobj * obj = &scene->objs[i];
         xxfloat t;
-        if (isect_sphere(obj->p, obj->r, r_p, r_d, &t)) {
-            if (t < min_t) {
-                min_t = t;
-                min_i = i;
+        if (obj->objtype == SPHERE) {
+            if (isect_sphere(obj->sphere.p, obj->sphere.r, r_p, r_d, &t)) {
+                if (t < min_t) {
+                    min_norm = vec3_sub(vec3_add(r_p, vec3_mul(r_d, t)), scene->objs[min_i].sphere.p);
+                    min_t = t;
+                    min_i = i;
+                }
             }
+        } else if (obj->objtype == BOX) {
+            vec3 norm;
+            if (isect_box(obj->box.p, obj->box.a0, obj->box.a1, obj->box.a2, r_p, r_d, obj->inv, &t, &norm)) {
+                if (t < min_t) {
+                    min_norm = norm;
+                    min_t = t;
+                    min_i = i;
+                }
+            }
+        } else {
+            printf("UNKNOWN OBJECT #%d\n", i);
+            XX_TODO;
         }
     }
     if (min_i >= 0) {
         *out_ipos = vec3_add(r_p, vec3_mul(r_d, min_t)); 
-        *out_inorm = vec3_sub(*out_ipos, scene->objs[min_i].p);
+        *out_inorm = vec3_sub(*out_ipos, scene->objs[min_i].sphere.p);
         *out_obj = &scene->objs[min_i];
         vec3_normalize(out_inorm);
         return 1;
@@ -142,5 +160,59 @@ int isect_sphere(vec3 s_p, xxfloat s_r, vec3 r_p, vec3 r_d, xxfloat * out_t) {
         return 0;
     }
 }
+
+#define t_plane(p_p, p_n, r_p, r_d) (vec3_dot(vec3_sub(p_p, r_p), p_n) / vec3_dot(r_d, p_n))
+
+int isect_box(vec3 b_p, vec3 b_a0, vec3 b_a1, vec3 b_a2, vec3 r_p, vec3 r_d, int inv, xxfloat * out_t, vec3 * out_inorm) {
+    vec3 norm;
+
+    float t_a00 = t_plane(vec3_add(b_p, b_a0), b_a0, r_p, r_d);
+    float t_a01 = t_plane(vec3_sub(b_p, b_a0), b_a0, r_p, r_d);
+
+    float tmin0 = fminf(t_a00, t_a01);
+    float tmax0 = fmaxf(t_a00, t_a01);
+
+    float t_a10 = t_plane(vec3_add(b_p, b_a1), b_a1, r_p, r_d);
+    float t_a11 = t_plane(vec3_sub(b_p, b_a1), b_a1, r_p, r_d);
+
+    float tmin1 = fmaxf(tmin0, fminf(t_a10, t_a11));
+    float tmax1 = fminf(tmax0, fmaxf(t_a10, t_a11));
+
+    if (tmin1 > tmax1) return 0;
+    
+    float t_a20 = t_plane(vec3_add(b_p, b_a2), b_a2, r_p, r_d);
+    float t_a21 = t_plane(vec3_sub(b_p, b_a2), b_a2, r_p, r_d);
+
+    float tmin2 = fmaxf(tmin1, fminf(t_a20, t_a21));
+    float tmax2 = fminf(tmax1, fmaxf(t_a20, t_a21));
+
+    if (tmin2 > tmax2) return 0;
+
+
+    if (!inv) {
+        if (tmin2 > tmin1) {
+            *out_inorm = vec3_mul(b_a2, t_a20 < t_a21 ? 1 : -1);
+        } else if (tmin1 > tmin0) {
+            *out_inorm = vec3_mul(b_a1, t_a10 < t_a11 ? 1 : -1);
+        } else {
+            *out_inorm = vec3_mul(b_a0, t_a00 < t_a01 ? 1 : -1);
+        }
+        *out_t = tmin2;
+    } else {
+        if (tmax2 < tmax1) {
+            *out_inorm = vec3_mul(b_a2, t_a20 < t_a21 ? 1 : -1);
+        } else if (tmax1 < tmax0) {
+            *out_inorm = vec3_mul(b_a1, t_a10 < t_a11 ? 1 : -1);
+        } else {
+            *out_inorm = vec3_mul(b_a0, t_a00 < t_a01 ? 1 : -1);
+        }
+        *out_t = tmax2;
+    }
+
+    return 1;
+}
+
+
+
 
 
