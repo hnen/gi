@@ -16,6 +16,7 @@
 		9D127AB81DC4B6A8005A0ABD /* isect.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D127AB11DC4B6A7005A0ABD /* isect.c */; };
 		9D127AB91DC4B6A8005A0ABD /* main.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D127AB21DC4B6A7005A0ABD /* main.c */; };
 		9D127ABA1DC4B6A8005A0ABD /* obj.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D127AB31DC4B6A8005A0ABD /* obj.c */; };
+		9D4D5C481DC61BDA00B203F6 /* timer.c in Sources */ = {isa = PBXBuildFile; fileRef = 9D4D5C471DC61BDA00B203F6 /* timer.c */; };
 		9D58D89C1DB2CCD8007AEECB /* libGLEW.2.0.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D58D89B1DB2CCD8007AEECB /* libGLEW.2.0.0.dylib */; };
 		9D58D89E1DB2CE08007AEECB /* libglfw3.3.2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9D58D89D1DB2CE08007AEECB /* libglfw3.3.2.dylib */; };
 		9D6FEB441DB4D7C3009EAF56 /* hello.cl in Sources */ = {isa = PBXBuildFile; fileRef = 9D6FEB431DB4D7C3009EAF56 /* hello.cl */; };
@@ -66,6 +67,8 @@
 		9D127AB11DC4B6A7005A0ABD /* isect.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = isect.c; sourceTree = "<group>"; };
 		9D127AB21DC4B6A7005A0ABD /* main.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = main.c; sourceTree = "<group>"; };
 		9D127AB31DC4B6A8005A0ABD /* obj.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = obj.c; sourceTree = "<group>"; };
+		9D4D5C461DC61BDA00B203F6 /* timer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = timer.h; sourceTree = "<group>"; };
+		9D4D5C471DC61BDA00B203F6 /* timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = timer.c; sourceTree = "<group>"; };
 		9D58D89B1DB2CCD8007AEECB /* libGLEW.2.0.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libGLEW.2.0.0.dylib; path = ../../../../../usr/local/Cellar/glew/2.0.0/lib/libGLEW.2.0.0.dylib; sourceTree = "<group>"; };
 		9D58D89D1DB2CE08007AEECB /* libglfw3.3.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libglfw3.3.2.dylib; path = ../../../../../usr/local/Cellar/glfw3/3.2.1/lib/libglfw3.3.2.dylib; sourceTree = "<group>"; };
 		9D6FEB431DB4D7C3009EAF56 /* hello.cl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.opencl; path = hello.cl; sourceTree = "<group>"; };
@@ -109,6 +112,8 @@
 		9D0EFD901DB012AF00303CB4 /* src */ = {
 			isa = PBXGroup;
 			children = (
+				9D4D5C461DC61BDA00B203F6 /* timer.h */,
+				9D4D5C471DC61BDA00B203F6 /* timer.c */,
 				9D127AA51DC4B6A7005A0ABD /* cl.h */,
 				9D127AA61DC4B6A7005A0ABD /* common.h */,
 				9D127AA71DC4B6A7005A0ABD /* gl.h */,
@@ -206,6 +211,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9D4D5C481DC61BDA00B203F6 /* timer.c in Sources */,
 				9D127AB81DC4B6A8005A0ABD /* isect.c in Sources */,
 				9D127ABA1DC4B6A8005A0ABD /* obj.c in Sources */,
 				9D127AB71DC4B6A8005A0ABD /* glfw.c in Sources */,

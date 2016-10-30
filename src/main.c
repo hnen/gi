@@ -11,16 +11,17 @@
 #include "obj.h"
 #include "isect.h"
 #include "scene.h"
+#include "timer.h"
 
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
-#define SCR_W 640
+#define SCR_W 320
 #define SCR_H ((SCR_W)*9/16)
 
 #define EPSILON 0.0001f
 
-#define SAMPLES_PER_PIXEL 10
+#define SAMPLES_PER_PIXEL 1
 #define OBJ_COUNT 12
 #define OBJ_SIZE_MIN 0.2f
 #define OBJ_SIZE_MAX 2.0f
@@ -111,6 +112,8 @@ static void init() {
 
     XX_E(gl_createShaderProgram(vertex_shader, fragment_shader, &g_program));
     gl_createTexture(GL_CLAMP_TO_EDGE, GL_LINEAR, &g_tex);
+
+    timer_reset();
 }
 
 static void release() {
@@ -119,6 +122,10 @@ static void release() {
     XX_E(gl_releaseShaderProgram(g_program));
     gl_deleteTexture(g_tex);
 }
+
+double prev_time = 0;
+double avg_frametime = 0;
+int framecount = 0;
 
 static void run() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -137,8 +144,23 @@ static void run() {
     gl_createVAO(&vao);
     gl_createVBO(&vbo, vertex_data, sizeof(vertex_data));
 
-    //void * data = xxalloc(SCR_W*SCR_H*4);
+    timer_push("frame");
     render_scene(&g_scene, &g_rndbuf, glfwGetTime());
+    timer_pop();
+
+    framecount++;
+
+    timer_frame();
+
+    if (glfwGetTime() - prev_time > 1) {
+        timer_purge();
+        printf("fps: %.2f\n", (double)framecount / (glfwGetTime() - prev_time));
+        timer_dump();
+        timer_reset();
+        framecount = 0;
+        prev_time = glfwGetTime();
+    }
+
     gl_setTextureData(g_tex, SCR_W, SCR_H, g_rndbuf.pixels);
 
     GL_E(glUseProgram(g_program.program));
@@ -194,6 +216,7 @@ static void render_scene(XXscene * scene, XXrenderbuffer * out_rndbuf, xxfloat t
     int h = out_rndbuf->h;
     unsigned int * buf = out_rndbuf->pixels;
 
+    timer_push("render");
     for(int y = 0; y < h; y++) {
         //printf("%.2f%%%...\n", (float)(y*100)/h);
         vec3 j = vec3_mul(cam_u, tanh * 2.0f * (xxfloat)(y-h/2) / h );
@@ -204,6 +227,7 @@ static void render_scene(XXscene * scene, XXrenderbuffer * out_rndbuf, xxfloat t
             *(buf++) = cast_ray_from_camera(cam_p, r_d, tanw/w, tanh/h, cam_d, &g_scene);
         }
     }
+    timer_pop();
 }
 
 static float * alloc_object_ray_emit_factors_cumulative(const XXscene * scene);
@@ -237,8 +261,8 @@ static void emit_rnd_ray_from_object(const XXscene * scene, int obj_i, vec3 cam_
         r_d = genhemisray(r_d);
         emitray(r_p, r_d, scene, obj, cam_p, cam_d, out_rndbuf);
     } else {
-    printf("objtype %d\n", obj->objtype);
-        XX_TODO;
+        printf("objtype %d\n", obj->objtype);
+        XX_TODO("unimplemented object type");
     }
 }
 
@@ -401,7 +425,7 @@ static void alloc_scene(int obj_count, XXscene * out_scene) {
         .col_albd = {0,0,0}, .col_emit={1,1,1}
     };
 
-    out_scene->objs[0] = _sceneobj_box_inv(_vec3(0, 3, 0), _vec3(0, 3, 0), _vec3(10, 0, 0), _vec3(0, 0, 10), mat_nrm);
+    out_scene->objs[0] = _sceneobj_aab_inv(_vec3(0, 3, 0), 10, 3, 10, mat_nrm);
     out_scene->objs[1] = _sceneobj_sphere(_vec3(0, 0, 0), 2.5f, mat_nrm);
     out_scene->objs[2] = _sceneobj_sphere(_vec3(2, 2, 2), 0.5f, mat_nrm);
     out_scene->objs[3] = _sceneobj_sphere(_vec3(8, 2, 8), 1.5f, mat_lit);
@@ -446,7 +470,7 @@ static vec3 get_pos_from_obj_surface(const XXsceneobj * obj) {
     if (obj->objtype == SPHERE) {
         return vec3_add(obj->sphere.p, vec3_mul(pickspherepos(), obj->sphere.r));
     } else {
-        XX_TODO;
+        XX_TODO("unimplemented object type: %d", obj->objtype);
     }
 }
 
@@ -471,10 +495,10 @@ static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth
         vec3 albd = hitobj->mat.col_albd;
         //vec3 rad = _vec3(hitnrm.x,hitnrm.y,hitnrm.z);
         vec3 rad = _vec3(0,0,0);
-        for(int i = 0; i < 3; i++) {
+        for(int i = 0; i < 1; i++) {
             rad = vec3_add(rad, sample_emitter(hitpos, scene));
         }
-        rad = vec3_mul(rad, 1.0f / 3);
+        rad = vec3_mul(rad, 1.0f / 1);
         //vec3 rad = _vec3(0,0,0);
         //vec3 nr = genhemisray(hitnrm);
         //krad = computeradiance(hitpos, nr, scene, depth+1);

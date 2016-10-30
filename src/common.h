@@ -14,7 +14,7 @@
 
 #define XX_E(...) if((__VA_ARGS__)) { fprintf(stderr, "err @ %s(%s):%d", __func__, __FILE__, __LINE__); __builtin_trap(); }
 
-#define XX_TODO { fprintf(stderr, "unimplmented code @ %s(%s):%d", __func__, __FILE__, __LINE__); __builtin_trap(); }
+#define XX_TODO(...) { char tmp[1024]; sprintf(tmp, __VA_ARGS__); fprintf(stderr, "unimplemented code @ %s(%s):%d \"%s\"", __func__, __FILE__, __LINE__, tmp); __builtin_trap(); }
 
 #ifndef DEBUG
 #define xxalloc(...) malloc(__VA_ARGS__)

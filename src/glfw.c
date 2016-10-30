@@ -12,6 +12,8 @@
 #include "glfw.h"
 
 void glfw_run(GLFWwindow *window, XXcallback runCallback) {
+    double t0 = glfwGetTime();
+    int framecount = 0;
     while (!glfwWindowShouldClose(window)) {
         runCallback();
         glfwPollEvents();

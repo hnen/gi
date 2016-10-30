@@ -5,7 +5,7 @@
 #include "common.h"
 #include "vec.h"
 
-typedef enum {SPHERE, BOX} XXobjtype;
+typedef enum {NONE, SPHERE, BOX, AAB} XXobjtype;
 
 typedef struct {
     vec3 col_albd;
@@ -23,6 +23,10 @@ typedef struct {
             vec3 p;
             vec3 a0, a1, a2;
         } box;
+        struct {
+            vec3 p;
+            float x, y, z;
+        } aab;
     };
     int inv;
     XXmat mat;
@@ -77,6 +81,24 @@ static inline XXsceneobj _sceneobj_box(vec3 p, vec3 a0, vec3 a1, vec3 a2, XXmat 
 
 static inline XXsceneobj _sceneobj_box_inv(vec3 p, vec3 a0, vec3 a1, vec3 a2, XXmat mat) {
     XXsceneobj ret = _sceneobj_box(p, a0, a1, a2, mat);
+    ret.inv = 1;
+    return ret;
+}
+
+static inline XXsceneobj _sceneobj_aab(vec3 p, float x, float y, float z, XXmat mat) {
+    XXsceneobj ret = {
+        .objtype = AAB,
+        .mat = mat,
+        .aab = {
+            .p = p, .x = x, .y = y, .z = z
+        },
+        .inv = 0
+    };
+    return ret;
+}
+
+static inline XXsceneobj _sceneobj_aab_inv(vec3 p, float x, float y, float z, XXmat mat) {
+    XXsceneobj ret = _sceneobj_aab(p, x, y, z, mat);
     ret.inv = 1;
     return ret;
 }

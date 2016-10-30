@@ -7,8 +7,10 @@
 #include "obj.h"
 #include "scene.h"
 #include "isect.h"
+#include "timer.h"
 
 int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj, vec3 * out_ipos, vec3 * out_inorm) {
+    timer_push("isect_scene");
     xxfloat min_t = FLT_MAX;
     int min_i = -1;
     vec3 min_norm;
@@ -32,11 +34,22 @@ int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj
                     min_i = i;
                 }
             }
+        } else if (obj->objtype == AAB) {
+            vec3 norm;
+            if (isect_aab(obj->box.p, obj->aab.x, obj->aab.y, obj->aab.z, r_p, r_d, obj->inv, &t, &norm)) {
+                if (t < min_t) {
+                    min_norm = norm;
+                    min_t = t;
+                    min_i = i;
+                }
+            }
         } else {
             printf("UNKNOWN OBJECT #%d\n", i);
-            XX_TODO;
+            XX_TODO("Unimplemented object type");
         }
     }
+    timer_pop();
+
     if (min_i >= 0) {
         *out_ipos = vec3_add(r_p, vec3_mul(r_d, min_t)); 
         *out_inorm = min_norm;
@@ -162,6 +175,59 @@ int isect_sphere(vec3 s_p, xxfloat s_r, vec3 r_p, vec3 r_d, xxfloat * out_t) {
 }
 
 #define t_plane(p_p, p_n, r_p, r_d) (vec3_dot(vec3_sub(p_p, r_p), p_n) / vec3_dot(r_d, p_n))
+
+#define t_plane_s(p_p_x, r_p_x, r_d_x) ((p_p_x - r_p_x) / r_d_x)
+
+int isect_aab(vec3 b_p, float a_x, float a_y, float a_z, vec3 r_p, vec3 r_d, int inv, xxfloat * out_t, vec3 * out_inorm) {
+    vec3 norm;
+
+    float t_a00 = t_plane_s(b_p.x + a_x, r_p.x, r_d.x);
+    float t_a01 = t_plane_s(b_p.x - a_x, r_p.x, r_d.x);
+
+    float tmin0 = fminf(t_a00, t_a01);
+    float tmax0 = fmaxf(t_a00, t_a01);
+
+    float t_a10 = t_plane_s(b_p.y + a_y, r_p.y, r_d.y);
+    float t_a11 = t_plane_s(b_p.y - a_y, r_p.y, r_d.y);
+
+    float tmin1 = fmaxf(tmin0, fminf(t_a10, t_a11));
+    float tmax1 = fminf(tmax0, fmaxf(t_a10, t_a11));
+
+    if (tmin1 > tmax1) return 0;
+    
+    float t_a20 = t_plane_s(b_p.z + a_z, r_p.z, r_d.z);
+    float t_a21 = t_plane_s(b_p.z - a_z, r_p.z, r_d.z);
+
+    float tmin2 = fmaxf(tmin1, fminf(t_a20, t_a21));
+    float tmax2 = fminf(tmax1, fmaxf(t_a20, t_a21));
+
+    if (tmin2 > tmax2) return 0;
+
+    if (!inv) {
+        if (tmin2 > tmin1) {
+            *out_inorm = _vec3(0, 0, t_a20 < t_a21 ? 1 : -1);
+        } else if (tmin1 > tmin0) {
+            *out_inorm = _vec3(0, t_a10 < t_a11 ? 1 : -1, 0);
+        } else {
+            *out_inorm = _vec3(t_a00 < t_a01 ? 1 : -1, 0, 0);
+        }
+        *out_t = tmin2;
+    } else {
+        if (tmax2 < tmax1) {
+            *out_inorm = _vec3(0, 0, t_a20 < t_a21 ? 1 : -1);
+        } else if (tmax1 < tmax0) {
+            *out_inorm = _vec3(0, t_a10 < t_a11 ? 1 : -1, 0);
+        } else {
+            *out_inorm = _vec3(t_a00 < t_a01 ? 1 : -1, 0, 0);
+        }
+        *out_t = tmax2;
+    }
+
+    vec3_normalize(out_inorm);
+
+
+    return 1;
+}
 
 int isect_box(vec3 b_p, vec3 b_a0, vec3 b_a1, vec3 b_a2, vec3 r_p, vec3 r_d, int inv, xxfloat * out_t, vec3 * out_inorm) {
     vec3 norm;
