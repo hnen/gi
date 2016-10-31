@@ -16,7 +16,7 @@
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
-#define SCR_W 320
+#define SCR_W 1280
 #define SCR_H ((SCR_W)*9/16)
 
 #define EPSILON 0.0001f
@@ -76,11 +76,13 @@ static void renderbuffer_clear(XXrenderbuffer * buf) {
     }
 }
 
-struct XXshaderprogram g_program;
+struct XXshaderprogram g_blit_program;
+struct XXshaderprogram g_trace_program;
 GLuint g_tex;
+GLuint g_fb;
 XXobj g_obj;
 
-static void render_scene(XXscene * scene, XXrenderbuffer * out_rndbuf, xxfloat t);
+static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxfloat t);
 static inline float isect_scene_len(const XXscene * scene, vec3 r_p, vec3 r_d);
 static inline vec3 genhemisray(vec3 nitnrm);
 static inline vec3 pickspherepos();
@@ -110,8 +112,10 @@ static void init() {
     srand(time(0));
     alloc_scene(OBJ_COUNT, &g_scene);
 
-    XX_E(gl_createShaderProgram(vertex_shader, fragment_shader, &g_program));
-    gl_createTexture(GL_CLAMP_TO_EDGE, GL_LINEAR, &g_tex);
+    XX_E(gl_createShaderProgram(vertex_shader, fragment_shader, &g_blit_program));
+    XX_E(gl_createShaderProgramFromFile("./glsl/trace.vert", "./glsl/trace.frag", &g_trace_program));
+    gl_createTexture(SCR_W, SCR_H, GL_CLAMP_TO_EDGE, GL_LINEAR, &g_tex);
+    gl_createFramebuffer(g_tex, &g_fb);
 
     timer_reset();
 }
@@ -119,7 +123,8 @@ static void init() {
 static void release() {
     scene_free(g_scene);
     renderbuffer_free(g_rndbuf);
-    XX_E(gl_releaseShaderProgram(g_program));
+    XX_E(gl_releaseShaderProgram(g_blit_program));
+    gl_deleteFramebuffer(g_fb);
     gl_deleteTexture(g_tex);
 }
 
@@ -127,27 +132,7 @@ double prev_time = 0;
 double avg_frametime = 0;
 int framecount = 0;
 
-static void run() {
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    static const GLfloat vertex_data[] = {
-        1.0f, -1.0f, 0.0f,
-        -1.0f, -1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
-        1.0f,  1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f
-    };
-
-    GLuint vao, vbo;
-    gl_createVAO(&vao);
-    gl_createVBO(&vbo, vertex_data, sizeof(vertex_data));
-
-    timer_push("frame");
-    render_scene(&g_scene, &g_rndbuf, glfwGetTime());
-    timer_pop();
-
+static void updatetimer() {
     framecount++;
 
     timer_frame();
@@ -160,17 +145,28 @@ static void run() {
         framecount = 0;
         prev_time = glfwGetTime();
     }
+}
 
-    gl_setTextureData(g_tex, SCR_W, SCR_H, g_rndbuf.pixels);
+static void render_fullscreen_quad(GLuint shaderprogram);
 
-    GL_E(glUseProgram(g_program.program));
-    GL_E(glUniform1i(glGetUniformLocation(g_program.program, "tex"), 0));
+static void run() {
 
-    gl_renderVBO(vbo, g_program.program, 2);
+    timer_push("frame");
+    render_scene(&g_scene, g_tex, g_fb, glfwGetTime());
+    
+    timer_pop();
 
-    gl_releaseVBO(vbo);
-    gl_releaseVAO(vao);
+    GL_E(glBindFramebuffer(GL_FRAMEBUFFER, 0));
+    GL_E(glViewport(0, 0, WINDOW_W*2, WINDOW_H*2));
+    GL_E(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
+    GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
+    gl_bindTexture(g_tex, GL_TEXTURE0);
+    GL_E(glUseProgram(g_blit_program.program));
+    GL_E(glUniform1i(glGetUniformLocation(g_blit_program.program, "tex"), 0));
+    render_fullscreen_quad(g_blit_program.program);
+
+    updatetimer();
 }
 
 static void scene_gather_emitters(XXscene * scene, float min_emission) {
@@ -186,16 +182,27 @@ static void scene_gather_emitters(XXscene * scene, float min_emission) {
 }
 
 
-static void render_scene(XXscene * scene, XXrenderbuffer * out_rndbuf, xxfloat t) {
+static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_d, vec3 cam_p);
 
+static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxfloat t) {
     scene_gather_emitters(scene, 0.01f);
-
-    //scene->objs[0].p = _vec3(sinf(t) * 4.0f, 3.0f + sinf(t*0.2f) * 2.0f, cosf(t*1.5f)*4.0f);
 
     float cam_r = 10.0f + sinf(t * 0.6f) * 4.0f;
     vec3 cam_p = {sinf(t * 0.2f) * cam_r, 7.0f, cosf(t * 0.2f) * cam_r};
     vec3 cam_dst = {0, 0.0f, 0};
     vec3 cam_d = vec3_sub(cam_dst, cam_p);
+
+    render_scene_cpu(&g_scene, &g_rndbuf, cam_p, cam_d);
+    gl_setTextureData(tgt_texture, SCR_W, SCR_H, g_rndbuf.pixels);
+
+    GL_E(glBindFramebuffer(GL_FRAMEBUFFER, tgt_fb));
+    GL_E(glViewport(0, 0, SCR_W, SCR_H));
+    GL_E(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
+    GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    render_fullscreen_quad(g_trace_program.program);
+}
+
+static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_p, vec3 cam_d) {
     vec3_normalize(&cam_d);
 
     vec3 wld_u = {0, 1, 0};
@@ -508,8 +515,23 @@ static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth
     return _vec3(100,0,100);
 }
 
+static void render_fullscreen_quad(GLuint shaderprogram) {
+    static const GLfloat vertex_data[] = {
+        1.0f, -1.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+        1.0f,  1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f
+    };
 
+    GLuint vao, vbo;
+    gl_createVAO(&vao);
+    gl_createVBO(&vbo, vertex_data, sizeof(vertex_data));
 
-
-
+    gl_renderVBO(vbo, shaderprogram, 2);
+    
+    gl_releaseVBO(vbo);
+    gl_releaseVAO(vao);
+}
 

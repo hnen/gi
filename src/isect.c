@@ -10,7 +10,7 @@
 #include "timer.h"
 
 int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj, vec3 * out_ipos, vec3 * out_inorm) {
-    timer_push("isect_scene");
+    //timer_push("isect_scene");
     xxfloat min_t = FLT_MAX;
     int min_i = -1;
     vec3 min_norm;
@@ -48,7 +48,7 @@ int isect_scene(const XXscene * scene, vec3 r_p, vec3 r_d, XXsceneobj ** out_obj
             XX_TODO("Unimplemented object type");
         }
     }
-    timer_pop();
+    //timer_pop();
 
     if (min_i >= 0) {
         *out_ipos = vec3_add(r_p, vec3_mul(r_d, min_t)); 

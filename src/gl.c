@@ -7,12 +7,13 @@
 //
 
 #include "gl.h"
+#include "common.h"
 
-XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_handle);
+XXerr gl_compileShader(GLuint shadertype, const char * source, const char * name, GLuint * out_handle);
 
-XXerr gl_createShaderProgram(const char * vs_src, const char * fs_src, struct XXshaderprogram * out_program) {
-    XX_E(gl_compileShader(GL_VERTEX_SHADER, vs_src, &out_program->vs));
-    XX_E(gl_compileShader(GL_FRAGMENT_SHADER, fs_src, &out_program->fs));
+XXerr _gl_createShaderProgram(const char * vs_src, const char * vs_name, const char * fs_src, const char *fs_name, struct XXshaderprogram * out_program) {
+    XX_E(gl_compileShader(GL_VERTEX_SHADER, vs_src, vs_name, &out_program->vs));
+    XX_E(gl_compileShader(GL_FRAGMENT_SHADER, fs_src, fs_name, &out_program->fs));
     
     GLuint prg = glCreateProgram();
     GL_E(glAttachShader(prg, out_program->fs));
@@ -36,6 +37,19 @@ XXerr gl_createShaderProgram(const char * vs_src, const char * fs_src, struct XX
     return 0;
 }
 
+XXerr gl_createShaderProgramFromFile(const char * vs_filename, const char * fs_filename, struct XXshaderprogram * out_program) {
+   char *vs_src, *fs_src;
+   size_t vs_size, fs_size;
+   file_read(vs_filename, &vs_src, &vs_size); 
+   file_read(fs_filename, &fs_src, &fs_size); 
+   return _gl_createShaderProgram(vs_src, vs_filename, fs_src, fs_filename, out_program);
+}
+
+XXerr gl_createShaderProgram(const char * vs_src, const char * fs_src, struct XXshaderprogram * out_program) {
+    return _gl_createShaderProgram(vs_src, "(inline vertex shader)", fs_src, "(inline fragment shader)", out_program);
+}
+
+
 XXerr gl_releaseShaderProgram(struct XXshaderprogram program) {
     GL_E(glDeleteShader(program.fs));
     GL_E(glDeleteShader(program.vs));
@@ -46,7 +60,7 @@ XXerr gl_releaseShaderProgram(struct XXshaderprogram program) {
     return 0;
 }
 
-XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_handle) {
+XXerr gl_compileShader(GLuint shadertype, const char * source, const char *name, GLuint * out_handle) {
     GLuint handle = glCreateShader(shadertype);
     GL_E(glShaderSource(handle, 1, &source, NULL));
     GL_E(glCompileShader(handle));
@@ -59,7 +73,7 @@ XXerr gl_compileShader(GLuint shadertype, const char * source, GLuint * out_hand
         
         char * str = (char*)xxalloc(loglength);
         GL_E(glGetShaderInfoLog(handle, loglength, &loglength, str));
-        fprintf(stderr, "!!Error with shader compilation:\n%s\n", str);
+        fprintf(stderr, "!!Error with shader compilation %s:\n%s\n", name, str);
         xxfree(str);
         
         GL_E(glDeleteShader(handle));
@@ -105,7 +119,21 @@ void gl_renderVBO(GLuint vbo, GLuint use_shader_program, int tricount) {
     GL_E(glDisableVertexAttribArray(0));
 }
 
-void gl_createTexture(GLuint wrap, GLuint filter, GLuint * out_tex) {
+void gl_createFramebuffer(GLuint txt_texture, GLuint * out_fb) {
+    GLuint ret;
+    GL_E(glGenFramebuffers(1, &ret));
+    GL_E(glBindFramebuffer(GL_FRAMEBUFFER, ret));
+    GL_E(glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, ret, 0));
+    GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+    GL_E(glDrawBuffers(1, drawBuffers));
+    *out_fb = ret;
+}
+
+void gl_deleteFramebuffer(GLuint fb) {
+    GL_E(glDeleteFramebuffers(1, &fb));
+}
+
+void gl_createTexture(int w, int h, GLuint wrap, GLuint filter, GLuint * out_tex) {
     GLuint tex;
     GL_E(glGenTextures(1, &tex));
     GL_E(glBindTexture(GL_TEXTURE_2D, tex));
@@ -113,6 +141,7 @@ void gl_createTexture(GLuint wrap, GLuint filter, GLuint * out_tex) {
     GL_E(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap));
     GL_E(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter));
     GL_E(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter));
+    GL_E(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0));
     *out_tex = tex;
 }
 
