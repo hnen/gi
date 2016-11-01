@@ -16,7 +16,7 @@
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
-#define SCR_W 1280
+#define SCR_W 640
 #define SCR_H ((SCR_W)*9/16)
 
 #define EPSILON 0.0001f
@@ -91,7 +91,7 @@ static void alloc_scene(int obj_count, XXscene * out_scene);
 static void cast_rays_from_emitters(const XXscene * scene, vec3 cam_p, vec3 cam_d, XXrenderbuffer * out_rndbuf);
 static void emit_rnd_ray_from_object(const XXscene * scene, int obj_i, vec3 cam_p, vec3 cam_d, XXrenderbuffer * out_rndbuf);
 static void emitray(vec3 r_p, vec3 r_d, const XXscene * scene, const XXsceneobj * emitter, vec3 cam_p, vec3 cam_d, XXrenderbuffer * out_rndbuf);
-static int is_occluded(const XXscene * scene, vec3 cam_pos, vec3 test_pos);
+static int is_occluded(const XXscene * scene, vec3 cam_pos, vec3 test_pos, XXsceneobj * test_obj);
 static int project_to_camera(vec3 cam_p, vec3 cam_d, vec3 wld_u, vec3 p, float * out_x, float * out_y, float aspect);
 static void cast_hit_to_screen(vec3 hitpos, vec3 hitcol, vec3 cam_p, vec3 cam_d, const XXscene * scene, XXrenderbuffer * out_rndbuf);
 static void add_sample_to_pixels(float fx, float fy, vec3 col, XXrenderbuffer * out_rndbuf);
@@ -237,7 +237,7 @@ static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 
 
             vec3 ray_tgt = vec3_add(cam_p, vec3_mul(r_d, focal_distance));
 
-            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.5f, tanw/w, tanh/h, cam_d, &g_scene);
+            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.35f, tanw/w, tanh/h, cam_d, &g_scene);
         }
     }
     timer_pop();
@@ -319,7 +319,7 @@ static void emitray(vec3 r_p, vec3 r_d, const XXscene * scene, const XXsceneobj 
 static void cast_hit_to_screen(vec3 hitpos, vec3 hitcol, vec3 cam_p, vec3 cam_d, const XXscene * scene, XXrenderbuffer * out_rndbuf) {
     float scr_x = NAN, scr_y = NAN;
     if (project_to_camera(cam_p, cam_d, _vec3(0,1,0), hitpos, &scr_x, &scr_y, (float)SCR_W/SCR_H)) {
-        if (!is_occluded(scene, cam_p, hitpos)) {
+        if (!is_occluded(scene, cam_p, hitpos, 0)) {
             float i_x = (scr_x + 1.0f) * SCR_W / 2.0f;
             float i_y = (scr_y + 1.0f) * SCR_H / 2.0f;
             add_sample_to_pixels(i_x, i_y, hitcol, out_rndbuf);
@@ -362,13 +362,16 @@ static inline void add_sample_to_pixel(int i_x, int i_y, float w, vec3 col, XXre
     *curr_pixel = c_r | (c_g << 8) | (c_b << 16);
 }
 
-static int is_occluded(const XXscene * scene, vec3 cam_pos, vec3 test_pos) {
+static int is_occluded(const XXscene * scene, vec3 cam_pos, vec3 test_pos, XXsceneobj * test_obj) {
     vec3 d = vec3_sub(test_pos, cam_pos);
     float len0 = vec3_length(d);
     vec3_normalize(&d);
     vec3 hitpos, hitnrm;
     XXsceneobj * hitobj = 0;
     if (isect_scene(scene, cam_pos, d, &hitobj, &hitpos, &hitnrm)) {
+        if (test_obj != 0 && hitobj == test_obj) {
+          return 0;
+        }
         float len1 = vec3_length(vec3_sub(hitpos, cam_pos));
         if (len0 - len1 > EPSILON) {
             return 1;
@@ -501,7 +504,7 @@ static vec3 get_pos_from_obj_surface(const XXsceneobj * obj) {
 static vec3 sample_emitter(vec3 pos, const XXscene * scene) {
     XXsceneobj * emitter_obj = &scene->objs[scene->emitter_objs[0]];
     vec3 emitter_pos = get_pos_from_obj_surface(emitter_obj);
-    if (!is_occluded(scene, emitter_pos, pos)) {
+    if (!is_occluded(scene, pos, emitter_pos, emitter_obj)) {
         return emitter_obj->mat.col_emit;
     } else {
         return _vec3(0,0,0);
@@ -519,8 +522,9 @@ static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth
         vec3 albd = hitobj->mat.col_albd;
         //vec3 rad = _vec3(hitnrm.x,hitnrm.y,hitnrm.z);
         vec3 rad = _vec3(0,0,0);
+        vec3 testhitpos = vec3_add(hitpos, vec3_mul(hitnrm, EPSILON));
         for(int i = 0; i < 1; i++) {
-            rad = vec3_add(rad, sample_emitter(hitpos, scene));
+            rad = vec3_add(rad, sample_emitter(testhitpos, scene));
         }
         rad = vec3_mul(rad, 1.0f / 1);
         //vec3 rad = _vec3(0,0,0);
