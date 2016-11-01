@@ -21,7 +21,7 @@
 
 #define EPSILON 0.0001f
 
-#define SAMPLES_PER_PIXEL 1
+#define SAMPLES_PER_PIXEL 40
 #define OBJ_COUNT 12
 #define OBJ_SIZE_MIN 0.2f
 #define OBJ_SIZE_MAX 2.0f
@@ -98,7 +98,7 @@ static void add_sample_to_pixels(float fx, float fy, vec3 col, XXrenderbuffer * 
 static inline void add_sample_to_pixel(int i_x, int i_y, float w, vec3 col, XXrenderbuffer * out_rndbuf);
 
 // obsolete unidirectional pathtracing funcs
-static inline unsigned int cast_ray_from_camera(vec3 r_p, vec3 r_d, float x_var, float y_var, vec3 cam_d, const XXscene * scene);
+static inline unsigned int cast_ray_from_camera(vec3 cam_p, vec3 cam_l, vec3 cam_u, vec3 ray_tgt, float lens_size, float x_var, float y_var, vec3 cam_d, const XXscene * scene);
 static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth);
 
 XXscene g_scene;
@@ -226,15 +226,18 @@ static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 
     int h = out_rndbuf->h;
     unsigned int * buf = out_rndbuf->pixels;
 
+    float focal_distance = vec3_length(vec3_sub(cam_p, scene->objs[1].sphere.p));
+
     timer_push("render");
     for(int y = 0; y < h; y++) {
-        //printf("%.2f%%%...\n", (float)(y*100)/h);
         vec3 j = vec3_mul(cam_u, tanh * 2.0f * (xxfloat)(y-h/2) / h );
         for(int x = 0; x < w; x++) { 
             vec3 i = vec3_mul(cam_l, tanw * 2.0f * (xxfloat)(x-w/2) / w );
             vec3 r_d = vec3_add(cam_d, vec3_add(i, j));
 
-            *(buf++) = cast_ray_from_camera(cam_p, r_d, tanw/w, tanh/h, cam_d, &g_scene);
+            vec3 ray_tgt = vec3_add(cam_p, vec3_mul(r_d, focal_distance));
+
+            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.5f, tanw/w, tanh/h, cam_d, &g_scene);
         }
     }
     timer_pop();
@@ -459,16 +462,26 @@ int main() {
     return 0;
 }
 
+static float sampledisc(float * out_x, float * out_y) {
+  float x, y;
+  do {
+    x = (randf() - 0.5f) * 2.0f;
+    y = (randf() - 0.5f) * 2.0f;
+  } while(x*x + y*y > 1);
+  *out_x = x;
+  *out_y = y;
+}
 
-static inline unsigned int cast_ray_from_camera(vec3 r_p, vec3 r_d, float x_var, float y_var, vec3 cam_d, const XXscene * scene) { 
+static inline unsigned int cast_ray_from_camera(vec3 cam_p, vec3 cam_l, vec3 cam_u, vec3 ray_tgt, float lens_size, float x_var, float y_var, vec3 cam_d, const XXscene * scene) { 
     vec3 pos, nrm;
     vec3 c = _vec3(0,0,0);
     for (int i = 0; i < SAMPLES_PER_PIXEL; i++) {
-        vec3 d = r_d;
-        d.x += (randf() - 0.5f) * x_var;
-        d.y += (randf() - 0.5f) * y_var;
-        vec3_normalize(&d);
-        c = vec3_add(c, computeradiance(r_p, d, scene, 0));
+        float lens_x, lens_y;
+        sampledisc(&lens_x, &lens_y);
+        vec3 r_p = vec3_add(cam_p, vec3_add(vec3_mul(cam_l, lens_x * lens_size), vec3_mul(cam_u, lens_y * lens_size)));
+        vec3 r_d = vec3_sub(ray_tgt, r_p);
+        vec3_normalize(&r_d);
+        c = vec3_add(c, computeradiance(r_p, r_d, scene, 0));
     }
     c = vec3_mul(c, 1.0f / SAMPLES_PER_PIXEL);
     unsigned char f_r = (unsigned char)(clamp(c.x) * 255);
