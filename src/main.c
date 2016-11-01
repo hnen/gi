@@ -81,6 +81,7 @@ struct XXshaderprogram g_trace_program;
 GLuint g_tex;
 GLuint g_fb;
 XXobj g_obj;
+int window_w, window_h;
 
 static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxfloat t);
 static inline float isect_scene_len(const XXscene * scene, vec3 r_p, vec3 r_d);
@@ -157,7 +158,7 @@ static void run() {
     timer_pop();
 
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    GL_E(glViewport(0, 0, WINDOW_W*2, WINDOW_H*2));
+    GL_E(glViewport(0, 0, window_w, window_h));
     GL_E(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
     GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -195,11 +196,13 @@ static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxf
     render_scene_cpu(&g_scene, &g_rndbuf, cam_p, cam_d);
     gl_setTextureData(tgt_texture, SCR_W, SCR_H, g_rndbuf.pixels);
 
+    /*
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, tgt_fb));
     GL_E(glViewport(0, 0, SCR_W, SCR_H));
     GL_E(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
     GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     render_fullscreen_quad(g_trace_program.program);
+    */
 }
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_p, vec3 cam_d) {
@@ -439,12 +442,13 @@ static void alloc_scene(int obj_count, XXscene * out_scene) {
 
 }
 
+
 int main() {
 
     //cl_run();
 
     GLFWwindow * window;
-    glfw_init(&window, WINDOW_W, WINDOW_H);
+    glfw_init(&window, WINDOW_W, WINDOW_H, &window_w, &window_h);
     init();
 
     glfw_run(window, &run);

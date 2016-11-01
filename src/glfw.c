@@ -22,7 +22,7 @@ void glfw_run(GLFWwindow *window, XXcallback runCallback) {
     
 }
 
-void glfw_init(GLFWwindow ** out_window, int w, int h) {
+void glfw_init(GLFWwindow ** out_window, int w, int h, int * out_w, int * out_h) {
     
     if (!glfwInit()) {
         fprintf(stderr, "Couldn't initialize GLFW");
@@ -50,7 +50,8 @@ void glfw_init(GLFWwindow ** out_window, int w, int h) {
     const GLubyte* version = glGetString(GL_VERSION);
     printf("OpenGL Renderer: %s\n", renderer_name);
     printf("OpenGL version supported %s\n", version);
-    
+
+    glfwGetWindowSize(window, out_w, out_h);
     
     *out_window = window;
 }

@@ -14,7 +14,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-void glfw_init(GLFWwindow ** out_window, int w, int h);
+void glfw_init(GLFWwindow ** out_window, int w, int h, int * out_w, int * out_h);
 void glfw_run(GLFWwindow *window, XXcallback runCallback);
 
 #endif /* glfw_h */
