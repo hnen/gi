@@ -21,7 +21,7 @@
 
 #define EPSILON 0.0001f
 
-#define SAMPLES_PER_PIXEL 1
+#define SAMPLES_PER_PIXEL 1 
 #define OBJ_COUNT 12
 #define OBJ_SIZE_MIN 0.2f
 #define OBJ_SIZE_MAX 2.0f
@@ -158,7 +158,7 @@ static void run() {
     timer_pop();
 
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    GL_E(glViewport(0, 0, window_w, window_h));
+    GL_E(glViewport(0, 0, window_w *2, window_h*2));
     GL_E(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
     GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
@@ -196,13 +196,11 @@ static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxf
     render_scene_cpu(&g_scene, &g_rndbuf, cam_p, cam_d);
     gl_setTextureData(tgt_texture, SCR_W, SCR_H, g_rndbuf.pixels);
 
-    /*
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, tgt_fb));
     GL_E(glViewport(0, 0, SCR_W, SCR_H));
     GL_E(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
     GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
     render_fullscreen_quad(g_trace_program.program);
-    */
 }
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_p, vec3 cam_d) {
@@ -226,7 +224,8 @@ static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 
     int h = out_rndbuf->h;
     unsigned int * buf = out_rndbuf->pixels;
 
-    float focal_distance = vec3_length(vec3_sub(cam_p, scene->objs[1].sphere.p));
+    float focal_distance = vec3_length(vec3_sub(cam_p, scene->objs[1].sphere.p)) - scene->objs[1].sphere.r * 0.25f;
+    //float focal_distance = 10.0f;
 
     timer_push("render");
     for(int y = 0; y < h; y++) {
@@ -237,7 +236,7 @@ static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 
 
             vec3 ray_tgt = vec3_add(cam_p, vec3_mul(r_d, focal_distance));
 
-            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.35f, tanw/w, tanh/h, cam_d, &g_scene);
+            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.1f, tanw/w, tanh/h, cam_d, &g_scene);
         }
     }
     timer_pop();
@@ -501,11 +500,13 @@ static vec3 get_pos_from_obj_surface(const XXsceneobj * obj) {
     }
 }
 
-static vec3 sample_emitter(vec3 pos, const XXscene * scene) {
+static vec3 sample_emitter(vec3 pos, vec3 norm, const XXscene * scene) {
     XXsceneobj * emitter_obj = &scene->objs[scene->emitter_objs[0]];
     vec3 emitter_pos = get_pos_from_obj_surface(emitter_obj);
     if (!is_occluded(scene, pos, emitter_pos, emitter_obj)) {
-        return emitter_obj->mat.col_emit;
+        vec3 d = vec3_sub(emitter_pos, pos);
+        vec3_normalize(&d);
+        return vec3_mul(emitter_obj->mat.col_emit, vec3_dot(norm, d));
     } else {
         return _vec3(0,0,0);
     }
@@ -524,7 +525,7 @@ static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth
         vec3 rad = _vec3(0,0,0);
         vec3 testhitpos = vec3_add(hitpos, vec3_mul(hitnrm, EPSILON));
         for(int i = 0; i < 1; i++) {
-            rad = vec3_add(rad, sample_emitter(testhitpos, scene));
+            rad = vec3_add(rad, sample_emitter(testhitpos, hitnrm, scene));
         }
         rad = vec3_mul(rad, 1.0f / 1);
         //vec3 rad = _vec3(0,0,0);

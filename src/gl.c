@@ -7,6 +7,7 @@
 //
 
 #include "gl.h"
+#include "glsl_preproc.h"
 #include "common.h"
 
 XXerr gl_compileShader(GLuint shadertype, const char * source, const char * name, GLuint * out_handle);
@@ -40,8 +41,14 @@ XXerr _gl_createShaderProgram(const char * vs_src, const char * vs_name, const c
 XXerr gl_createShaderProgramFromFile(const char * vs_filename, const char * fs_filename, struct XXshaderprogram * out_program) {
    char *vs_src, *fs_src;
    size_t vs_size, fs_size;
-   file_read(vs_filename, &vs_src, &vs_size); 
-   file_read(fs_filename, &fs_src, &fs_size); 
+   //file_read(vs_filename, &vs_src, &vs_size); 
+   //file_read(fs_filename, &fs_src, &fs_size); 
+
+   glsl_preproc_process(vs_filename, &vs_src);
+   glsl_preproc_process(fs_filename, &fs_src);
+
+   //printf("done!\n");
+
 
    XXerr ret = _gl_createShaderProgram(vs_src, vs_filename, fs_src, fs_filename, out_program);
 

@@ -27,7 +27,9 @@ XXerr file_read(const char * filename, XXstring * out_content, size_t * out_cont
     
     buffer[fsize] = 0;
     
-    *out_contentSize = size;
+    if (out_contentSize) {
+        *out_contentSize = size;
+    }
     *out_content = buffer;
     
     return 0;
