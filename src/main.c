@@ -16,12 +16,12 @@
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
-#define SCR_W 640
+#define SCR_W 1280
 #define SCR_H ((SCR_W)*9/16)
 
 #define EPSILON 0.0001f
 
-#define SAMPLES_PER_PIXEL 40
+#define SAMPLES_PER_PIXEL 1
 #define OBJ_COUNT 12
 #define OBJ_SIZE_MIN 0.2f
 #define OBJ_SIZE_MAX 2.0f
@@ -465,7 +465,7 @@ int main() {
     return 0;
 }
 
-static float sampledisc(float * out_x, float * out_y) {
+static void sampledisc(float * out_x, float * out_y) {
   float x, y;
   do {
     x = (randf() - 0.5f) * 2.0f;

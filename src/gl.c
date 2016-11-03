@@ -42,7 +42,13 @@ XXerr gl_createShaderProgramFromFile(const char * vs_filename, const char * fs_f
    size_t vs_size, fs_size;
    file_read(vs_filename, &vs_src, &vs_size); 
    file_read(fs_filename, &fs_src, &fs_size); 
-   return _gl_createShaderProgram(vs_src, vs_filename, fs_src, fs_filename, out_program);
+
+   XXerr ret = _gl_createShaderProgram(vs_src, vs_filename, fs_src, fs_filename, out_program);
+
+   xxfree(vs_src);
+   xxfree(fs_src);
+   
+   return ret;
 }
 
 XXerr gl_createShaderProgram(const char * vs_src, const char * fs_src, struct XXshaderprogram * out_program) {
