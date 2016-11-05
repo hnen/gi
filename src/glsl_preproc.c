@@ -19,6 +19,7 @@ void concat(char * str0, int a, int b, char * str1, int c, int d, char ** out_st
     memcpy(&ret[b-a], str1, strlen(str1));
     memcpy(&ret[b-a + strlen(str1)], &str0[c], d-c);
     ret[b-a + strlen(str1) + d-c] = 0;
+    printf("concate result: \"%s\"\n", ret);
     *out_string = ret;
 }
 

@@ -1,9 +1,15 @@
 
+#define M_PI 3.141593f
+
 #define MAX_OBJS 5
 
 vec4 get_color() {
     return vec4(0,1,0,1);
 }
+
+struct Mat {
+    vec3 col_albd, col_emit;
+};
 
 struct SceneObj_sphere {
   vec3 p;
