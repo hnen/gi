@@ -45,11 +45,21 @@ XXerr file_size(const char * filename, size_t * out_size) {
 }
 
 void * __xxalloc(size_t amount) {
-    void * mem = malloc(amount);
-    memset(mem, 0xff, amount);
-    return mem;
+    size_t allocsize = amount+sizeof(void*)*2;
+    void * mem = malloc(allocsize);
+    memset(mem, 0xdf, allocsize);
+    return mem + sizeof(void*);
+}
+
+void __xxensure(void * ptr, size_t alloc_size) {
+    int m0 = *(unsigned int*)(ptr - 4) == 0xdfdfdfdf;
+    int m1 = *(unsigned int*)(ptr + alloc_size) == 0xdfdfdfdf;
+    if (!m0 || !m1) {
+        printf(C_RED "XXENSURE FAIL" C_RESET "\n");
+        __builtin_trap();
+    }
 }
 
 void __xxfree(void * ptr) {
-    free(ptr);
+    free(ptr-sizeof(void*));
 }

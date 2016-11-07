@@ -5,6 +5,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "hashmap.h"
 #include "glfw.h"
 #include "cl.h"
 #include "gl.h"
@@ -98,7 +99,7 @@ static void add_sample_to_pixels(float fx, float fy, vec3 col, XXrenderbuffer * 
 static inline void add_sample_to_pixel(int i_x, int i_y, float w, vec3 col, XXrenderbuffer * out_rndbuf);
 
 // obsolete unidirectional pathtracing funcs
-static inline unsigned int cast_ray_from_camera(vec3 cam_p, vec3 cam_l, vec3 cam_u, vec3 ray_tgt, float lens_size, float x_var, float y_var, vec3 cam_d, const XXscene * scene);
+static inline unsigned int cast_ray_from_camera(vec3 cam_p, vec3 cam_l, vec3 cam_u, vec3 ray_tgt, float lens_size, const XXscene * scene);
 static vec3 computeradiance(vec3 r_p, vec3 r_d, const XXscene * scene, int depth);
 
 XXscene g_scene;
@@ -184,23 +185,51 @@ static void scene_gather_emitters(XXscene * scene, float min_emission) {
 
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_d, vec3 cam_p);
+static void render_scene_gpu(XXscene * scene, vec3 cam_d, vec3 cam_p);
+static void upload_scene(GLuint program, const XXscene * scene);
 
 static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxfloat t) {
     scene_gather_emitters(scene, 0.01f);
 
     float cam_r = 10.0f + sinf(t * 0.6f) * 4.0f;
-    vec3 cam_p = {sinf(t * 0.2f) * cam_r, 7.0f, cosf(t * 0.2f) * cam_r};
+    vec3 cam_p = {-sinf(t * 0.2f) * cam_r, 7.0f, -cosf(t * 0.2f) * cam_r};
     vec3 cam_dst = {0, 0.0f, 0};
     vec3 cam_d = vec3_sub(cam_dst, cam_p);
 
-    render_scene_cpu(&g_scene, &g_rndbuf, cam_p, cam_d);
-    gl_setTextureData(tgt_texture, SCR_W, SCR_H, g_rndbuf.pixels);
+    //render_scene_cpu(&g_scene, &g_rndbuf, cam_p, cam_d);
+    //gl_setTextureData(tgt_texture, SCR_W, SCR_H, g_rndbuf.pixels);
 
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, tgt_fb));
     GL_E(glViewport(0, 0, SCR_W, SCR_H));
     GL_E(glClearColor(0.0f, 0.0f, 1.0f, 1.0f));
     GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+    render_scene_gpu(scene, cam_d, cam_p);
+
+}
+
+
+static void render_scene_gpu(XXscene * scene, vec3 cam_d, vec3 cam_p) {
+    vec3_normalize(&cam_d);
+
+    vec3 wld_u = {0, 1, 0};
+    vec3 cam_l = vec3_cross(wld_u, cam_d);
+    vec3 cam_u = vec3_cross(cam_d, cam_l);
+    vec3_normalize(&cam_d);
+    vec3_normalize(&cam_l);
+    vec3_normalize(&cam_u);
+    
+    GL_E(glUseProgram(g_trace_program.program));
+    GL_E(glUniform3fv(glGetUniformLocation(g_trace_program.program, "cam_p"), 1, (GLfloat*)&cam_p));
+    GL_E(glUniform3fv(glGetUniformLocation(g_trace_program.program, "cam_d"), 1, (GLfloat*)&cam_d));
+    GL_E(glUniform3fv(glGetUniformLocation(g_trace_program.program, "cam_l"), 1, (GLfloat*)&cam_l));
+    GL_E(glUniform3fv(glGetUniformLocation(g_trace_program.program, "cam_u"), 1, (GLfloat*)&cam_u));
+
+    upload_scene(g_trace_program.program, scene);
+
     render_fullscreen_quad(g_trace_program.program);
+}
+
+static void upload_scene(GLuint program, const XXscene * scene) {
 }
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_p, vec3 cam_d) {
@@ -236,7 +265,7 @@ static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 
 
             vec3 ray_tgt = vec3_add(cam_p, vec3_mul(r_d, focal_distance));
 
-            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.1f, tanw/w, tanh/h, cam_d, &g_scene);
+            *(buf++) = cast_ray_from_camera(cam_p, cam_l, cam_u, ray_tgt, 0.1f, &g_scene);
         }
     }
     timer_pop();
@@ -474,7 +503,7 @@ static void sampledisc(float * out_x, float * out_y) {
   *out_y = y;
 }
 
-static inline unsigned int cast_ray_from_camera(vec3 cam_p, vec3 cam_l, vec3 cam_u, vec3 ray_tgt, float lens_size, float x_var, float y_var, vec3 cam_d, const XXscene * scene) { 
+static inline unsigned int cast_ray_from_camera(vec3 cam_p, vec3 cam_l, vec3 cam_u, vec3 ray_tgt, float lens_size, const XXscene * scene) { 
     vec3 pos, nrm;
     vec3 c = _vec3(0,0,0);
     for (int i = 0; i < SAMPLES_PER_PIXEL; i++) {

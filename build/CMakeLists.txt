@@ -10,6 +10,8 @@ FIND_LIBRARY(CL_LIBRARY OpenCL)
 
 set(CMAKE_BUILD_TYPE Release)
 
+add_definitions(-DDEBUG)
+
 file(GLOB SOURCES "../src/*.c")
 add_executable(gi ${SOURCES})
 

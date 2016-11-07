@@ -47,7 +47,7 @@ XXerr gl_createShaderProgramFromFile(const char * vs_filename, const char * fs_f
    glsl_preproc_process(vs_filename, &vs_src);
    glsl_preproc_process(fs_filename, &fs_src);
 
-   printf("VERT:\n\"%s\"\n", vs_src);
+   //printf("VERT:\n\"%s\"\n", vs_src);
 
    //printf("done!\n");
 
