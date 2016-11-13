@@ -20,6 +20,7 @@ XXerr _gl_createShaderProgram(const char * vs_src, const char * vs_name, const c
     GL_E(glAttachShader(prg, out_program->fs));
     GL_E(glAttachShader(prg, out_program->vs));
     glLinkProgram(prg);
+
     
     GLint link_status = -1;
     glGetProgramiv(prg, GL_LINK_STATUS, &link_status);
@@ -47,7 +48,7 @@ XXerr gl_createShaderProgramFromFile(const char * vs_filename, const char * fs_f
    glsl_preproc_process(vs_filename, &vs_src);
    glsl_preproc_process(fs_filename, &fs_src);
 
-   //printf("VERT:\n\"%s\"\n", vs_src);
+   printf("FRAG:\n\"" C_RED "%s" C_RESET "\"\n", fs_src);
 
    //printf("done!\n");
 

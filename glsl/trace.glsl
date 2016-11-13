@@ -25,14 +25,14 @@ struct SceneObj_sphere {
 };
 struct SceneObj_aab {
   vec3 p;
-  float x, y, z;
+  vec3 size;
 };
 
 struct Scene {
     int obj_sphere_count;
     SceneObj_sphere obj_sphere_list[MAX_OBJS];
     int obj_aab_count;
-    SceneObj_sphere obj_aab_list[MAX_OBJS];
+    SceneObj_aab obj_aab_list[MAX_OBJS];
 
     int emitter_objs[MAX_OBJS*2];
     int emitter_objs_count;

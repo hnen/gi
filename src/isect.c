@@ -149,7 +149,7 @@ int isect_sphere(vec3 s_p, xxfloat s_r, vec3 r_p, vec3 r_d, xxfloat * out_t) {
     xxfloat det = b*b - 4*a*c;
     if (det >= 0) {
         xxfloat sdet = sqrtf(det);
-        xxfloat t0 = (-b - sqrtf(det)) / (2.0f * a);
+        xxfloat t0 = (-b - sdet) / (2.0f * a);
         if (t0 > 0) {
             *out_t = t0;
             /*

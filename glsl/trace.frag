@@ -2,6 +2,8 @@
 
 #include "trace.glsl"
 
+#include "isect.glsl"
+
 vec3 computeradiance(vec3 r_p, vec3 r_d, Scene scene) {
   return vec3(0,0,0);
 }

@@ -186,7 +186,7 @@ static void scene_gather_emitters(XXscene * scene, float min_emission) {
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_d, vec3 cam_p);
 static void render_scene_gpu(XXscene * scene, vec3 cam_d, vec3 cam_p);
-static void upload_scene(GLuint program, const XXscene * scene);
+static void upload_scene(GLuint program, const char * uniform_name, const XXscene * scene);
 
 static void render_scene(XXscene * scene, GLuint tgt_texture, GLuint tgt_fb, xxfloat t) {
     scene_gather_emitters(scene, 0.01f);
@@ -224,12 +224,40 @@ static void render_scene_gpu(XXscene * scene, vec3 cam_d, vec3 cam_p) {
     GL_E(glUniform3fv(glGetUniformLocation(g_trace_program.program, "cam_l"), 1, (GLfloat*)&cam_l));
     GL_E(glUniform3fv(glGetUniformLocation(g_trace_program.program, "cam_u"), 1, (GLfloat*)&cam_u));
 
-    upload_scene(g_trace_program.program, scene);
+    upload_scene(g_trace_program.program, "g_scene", scene);
 
     render_fullscreen_quad(g_trace_program.program);
 }
 
-static void upload_scene(GLuint program, const XXscene * scene) {
+static void upload_scene(GLuint program, const char * uniform_name, const XXscene * scene) {
+    int sphere_count = 0, aab_count = 0;
+
+    for(int i = 0; i < scene->obj_count; i++) {
+        XXsceneobj * obj = &scene->objs[i];
+        if (obj->objtype == SPHERE) {
+            char s0[1024];
+            sprintf(s0, "%s.obj_sphere_list[%d].p", uniform_name, sphere_count);
+            GL_E(glUniform3fv(glGetUniformLocation(program, s0), 1, (GLfloat*)&obj->sphere.p));
+            sprintf(s0, "%s.obj_sphere_list[%d].r", uniform_name, sphere_count);
+            GL_E(glUniform1f(glGetUniformLocation(program, s0), obj->sphere.r));
+            sphere_count++;
+        } else if (obj->objtype == AAB) {
+            char s0[1024];
+            sprintf(s0, "%s.obj_aab_list[%d].p", uniform_name, aab_count);
+            GL_E(glUniform3fv(glGetUniformLocation(program, s0), 1, (GLfloat*)&obj->aab.p));
+            sprintf(s0, "%s.obj_aab_list[%d].size", uniform_name, aab_count);
+            GL_E(glUniform3f(glGetUniformLocation(program, s0), obj->aab.x, obj->aab.y, obj->aab.z));
+            aab_count++;
+        } else {
+            XX_TODO("unimplemented object type %d", obj->objtype);
+        }
+    }
+
+    char s0[1024];
+    sprintf(s0, "%s.obj_sphere_count", uniform_name);
+    GL_E(glUniform1i(glGetUniformLocation(program, s0), sphere_count));
+    sprintf(s0, "%s.obj_aab_count", uniform_name);
+    GL_E(glUniform1i(glGetUniformLocation(program, s0), aab_count));
 }
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_p, vec3 cam_d) {

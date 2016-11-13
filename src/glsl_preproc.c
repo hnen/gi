@@ -15,6 +15,22 @@ void get_path_prefix(const char * path, char ** out_path_prefix) {
 
 // Concantenates str0[a..b] + str1 + str0[c..d]
 void concat(const char * str0, int a, int b, const char * str1, int c, int d, char ** out_string) {
+
+    /*
+    char * tmpstr = xxalloc(strlen(str0)+1);
+    strcpy(tmpstr, str0);
+    char _x = tmpstr[b];
+    tmpstr[b] = 0;
+    printf(C_CYAN "CONCAT:\n---\n%s\n---\n", &tmpstr[a]);
+    tmpstr[b] = _x;
+    printf(C_CYAN "%s\n---\n", str1);
+    _x = tmpstr[d];
+    tmpstr[d] = 0;
+    printf(C_CYAN "%s\n---\n", &tmpstr[c]);
+    tmpstr[d] = _x;
+    xxfree(tmpstr);
+    */
+
     int str1_len = strlen(str1);
     size_t allocsize = (b-a) + (d-c) + str1_len + 1;
     char * ret = xxalloc(allocsize);
@@ -23,6 +39,7 @@ void concat(const char * str0, int a, int b, const char * str1, int c, int d, ch
     memcpy(&ret[b-a + str1_len], &str0[c], d-c);
     ret[b-a + strlen(str1) + d-c] = 0;
     *out_string = ret;
+    printf(C_GREEN "CONCAT RESULT: %s" C_RESET, ret);
     xxassert_alloc(ret, allocsize);
 }
 
@@ -36,7 +53,6 @@ void _glsl_preproc_process(const char * src, char * path_prefix, char ** out_src
     xxassert_alloc(*out_src, strlen(src)+1);
 
     while(src[p] != 0) {
-        //printf("%d\n", p);
         int p0 = p;
         if (src[p] == '#') {
             if (memcmp(&src[p+1], "include", strlen("include")) == 0) {
@@ -66,12 +82,13 @@ void _glsl_preproc_process(const char * src, char * path_prefix, char ** out_src
                 char * concatenated_src;
                 concat(*out_src, 0, p0 + p_offset, included_src_preprocessed, p1+1+p_offset, strlen(*out_src), &concatenated_src);
 
-                p_offset += strlen(included_src_preprocessed);
+                p_offset += strlen(included_src_preprocessed) - (p1+1-p0);
 
                 xxfree(*out_src);
                 xxfree(included_src_preprocessed);
                 xxfree(included_src);
                 xxfree(included_file_path_prefix);
+
 
                 *out_src = concatenated_src;
 
