@@ -1,5 +1,7 @@
 #version 400
 
+#define EMITTER_SAMPLES 10 
+
 #include "trace.glsl"
 
 #include "isect.glsl"
@@ -13,28 +15,48 @@ in vec3 _r_d;
 layout(location = 0) out vec4 frag_colour;
 uniform Scene g_scene;
 
-/*
-vec3 computeradiance(vec3 r_p, vec3 r_d, Scene scene) {
-    vec3 hitpos, hitnrm;
-    XXsceneobj * hitobj = 0;
-    if (isect_scene(scene, r_p, r_d, &hitobj, &hitpos, &hitnrm)) {
-        vec3 emit = vec3_mul(hitobj->mat.col_emit, 1);
-        vec3 albd = hitobj->mat.col_albd;
-        vec3 rad = _vec3(0,0,0);
-        vec3 testhitpos = vec3_add(hitpos, vec3_mul(hitnrm, EPSILON));
-        for(int i = 0; i < 1; i++) {
-            rad = vec3_add(rad, sample_emitter(testhitpos, hitnrm, scene));
-        }
-        rad = vec3_mul(rad, 1.0f / 1);
-        rad = _vec3(rad.x * albd.x, rad.y * albd.y, rad.z * albd.z);
-        return vec3_add(emit, rad);
-    }
-    return _vec3(100,0,100);
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
 }
-*/
+
+vec3 pickspherepos(vec2 x) {
+    float h = rand(x) * 2.0f - 1.0f;
+    float a = rand(x*2) * 6.28f;
+    float r0 = sqrt(1 - h*h);
+    return vec3(sin(a)*r0, h, cos(a)*r0);
+}
+
 
 vec3 cast_ray_from_camera(vec3 r_p, vec3 r_d, Scene scene) { 
-    return r_d;
+
+    float t;
+    vec3 norm;
+
+    if (isect_scene(scene, r_p, r_d, t, norm)!=-1) {
+        vec3 ppos = r_p + r_d * t + norm * 0.0001f;
+
+        vec3 rad = vec3(0,0,0);
+        for(int i = 0; i < EMITTER_SAMPLES; i++) {
+            int _ei = i%scene.emitter_objs_count;
+            int ei = scene.emitter_objs[_ei];
+            SceneObj_sphere eobj = scene.obj_sphere_list[ei];
+            float t0;
+            vec3 norm0;
+            vec3 empos = eobj.p + pickspherepos(r_d.xy*(i+10)) * eobj.r;
+            vec3 edir = normalize(empos - ppos);
+            int iobj = isect_scene(scene, ppos, edir, t0, norm0);
+            if (iobj==ei) {
+                rad += vec3(1,1,1);
+            }
+        }
+        rad /= EMITTER_SAMPLES;
+        return rad;
+    } else {
+        return vec3(0,0,0);
+    }
+
+
+    //return r_d;
     //return computeradiance(r_p, r_d, scene);
 }
 

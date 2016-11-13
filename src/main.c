@@ -17,7 +17,7 @@
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
-#define SCR_W 1280
+#define SCR_W 640
 #define SCR_H ((SCR_W)*9/16)
 
 #define EPSILON 0.0001f
@@ -141,7 +141,8 @@ static void updatetimer() {
 
     if (glfwGetTime() - prev_time > 1) {
         timer_purge();
-        printf("fps: %.2f\n", (double)framecount / (glfwGetTime() - prev_time));
+        double fps = (double)framecount / (glfwGetTime() - prev_time);
+        printf("fps: %.2f (%.2fms)\n", fps, 1.0f / fps * 1000.0f);
         timer_dump();
         timer_reset();
         framecount = 0;
@@ -155,8 +156,6 @@ static void run() {
 
     timer_push("frame");
     render_scene(&g_scene, g_tex, g_fb, glfwGetTime());
-    
-    timer_pop();
 
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, 0));
     GL_E(glViewport(0, 0, window_w *2, window_h*2));
@@ -167,6 +166,7 @@ static void run() {
     GL_E(glUseProgram(g_blit_program.program));
     GL_E(glUniform1i(glGetUniformLocation(g_blit_program.program, "tex"), 0));
     render_fullscreen_quad(g_blit_program.program);
+    timer_pop();
 
     updatetimer();
 }
@@ -231,6 +231,7 @@ static void render_scene_gpu(XXscene * scene, vec3 cam_d, vec3 cam_p) {
 
 static void upload_scene(GLuint program, const char * uniform_name, const XXscene * scene) {
     int sphere_count = 0, aab_count = 0;
+    int emitter_count = 0;
 
     for(int i = 0; i < scene->obj_count; i++) {
         XXsceneobj * obj = &scene->objs[i];
@@ -251,6 +252,16 @@ static void upload_scene(GLuint program, const char * uniform_name, const XXscen
         } else {
             XX_TODO("unimplemented object type %d", obj->objtype);
         }
+        if (vec3_dot(obj->mat.col_emit, _vec3(1,1,1)) > 0.1f) {
+            char s0[1024];
+            sprintf(s0, "%s.emitter_objs[%d]", uniform_name, emitter_count);
+            if (obj->objtype == SPHERE) {
+                GL_E(glUniform1i(glGetUniformLocation(program, s0), sphere_count-1));
+            } else {
+                XX_TODO("emitter of objutype %d not supported yet, sorry!", obj->objtype);
+            }
+            emitter_count++;
+        }
     }
 
     char s0[1024];
@@ -258,6 +269,8 @@ static void upload_scene(GLuint program, const char * uniform_name, const XXscen
     GL_E(glUniform1i(glGetUniformLocation(program, s0), sphere_count));
     sprintf(s0, "%s.obj_aab_count", uniform_name);
     GL_E(glUniform1i(glGetUniformLocation(program, s0), aab_count));
+    sprintf(s0, "%s.emitter_objs_count", uniform_name);
+    GL_E(glUniform1i(glGetUniformLocation(program, s0), emitter_count));
 }
 
 static void render_scene_cpu(XXscene * scene, XXrenderbuffer * out_rndbuf, vec3 cam_p, vec3 cam_d) {
