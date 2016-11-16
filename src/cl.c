@@ -1,3 +1,4 @@
+﻿#if 0
 //
 //  xxCl.c
 //  opencl-xcode
@@ -71,3 +72,4 @@ void cl_init(cl_context * out_context, cl_device_id * out_device_id) {
     *out_context = clCreateContext(NULL, 1, &device_id, NULL, NULL, &ret);
     *out_device_id = device_id;
 }
+#endif

@@ -54,7 +54,7 @@ void timer_push(char * desc) {
     if (rand() <= RAND_MAX / (1 + ((*times_sampled) >> 4))) {
         runtimesample * s = &samples[runtimesample_p++];
         s->desc = desc;
-        clock_gettime(CLOCK_REALTIME, &tp);
+        //clock_gettime(CLOCK_REALTIME, &tp);
         s->tv_msec = tp.tv_nsec / 1000 + tp.tv_sec * 1000000;
         sampled_stack[++sampled_stack_top] = 1;
     } else {
@@ -66,7 +66,7 @@ void timer_pop() {
     if (sampled_stack[sampled_stack_top--]) {
         runtimesample * s = &samples[runtimesample_p++];
         s->desc = 0;
-        clock_gettime(CLOCK_REALTIME, &tp);
+        //clock_gettime(CLOCK_REALTIME, &tp);
         s->tv_msec = tp.tv_nsec / 1000 + tp.tv_sec * 1000000;
     } 
 }

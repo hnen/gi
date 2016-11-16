@@ -1,3 +1,4 @@
+﻿#if 0
 //
 //  xxCl.h
 //  opencl-xcode
@@ -25,3 +26,4 @@ void cl_init(cl_context * out_context, cl_device_id * out_device_id);
 void cl_run();
 
 #endif /* xxCl_h */
+#endif
