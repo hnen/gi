@@ -14,6 +14,8 @@
 #include "scene.h"
 #include "timer.h"
 
+#define M_PI 3.14159265f
+
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
@@ -106,8 +108,8 @@ XXscene g_scene;
 XXrenderbuffer g_rndbuf;
 
 static void init() {
-    obj_parse("./data/kuutiot.obj", &g_obj);
-    obj_printf(&g_obj);
+    //obj_parse("./data/kuutiot.obj", &g_obj);
+    //obj_printf(&g_obj);
 
     g_rndbuf = renderbuffer_alloc(SCR_W, SCR_H);
 

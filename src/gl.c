@@ -1,4 +1,4 @@
-//
+﻿//
 //  xxGl.c
 //  opencl-xcode
 //
@@ -178,7 +178,8 @@ void gl_bindTexture(GLuint tex, GLuint texture_unit) {
 void gl_handleErrors(const char * filename, int line, const char * call) {
     int had_errors = 0;
     for(GLenum err; (err = glGetError()) != GL_NO_ERROR;) {
-        const GLubyte * err_str = gluErrorString(err);
+        //const GLubyte * err_str = gluErrorString(err);
+	const GLubyte * err_str = "";
         fprintf(stderr, "Error \"%s\"(0x%04x) on call \"%s\". %s:%d", err_str, err, call, filename, line);
         had_errors = 1;
     }
