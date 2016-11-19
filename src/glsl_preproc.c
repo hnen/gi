@@ -37,7 +37,7 @@ void concat(const char * str0, int a, int b, const char * str1, int c, int d, ch
     memcpy(&ret[0],              &str0[a], b-a);
     memcpy(&ret[b-a],             str1,    str1_len);
     memcpy(&ret[b-a + str1_len], &str0[c], d-c);
-    ret[b-a + strlen(str1) + d-c] = 0;
+    ret[b-a + str1_len + d-c] = 0;
     *out_string = ret;
     printf(C_GREEN "CONCAT RESULT: %s" C_RESET, ret);
     xxassert_alloc(ret, allocsize);
