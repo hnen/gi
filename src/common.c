@@ -1,4 +1,4 @@
-//
+﻿//
 //  xxCommon.c
 //  opencl-xcode
 //
@@ -18,13 +18,14 @@ XXerr file_read(const char * filename, XXstring * out_content, size_t * out_cont
     FILE *fp;
     size_t fsize;
     
-    XX_E(!(fp = fopen(filename, "r")));
+    XX_E(!(fp = fopen(filename, "rb")));
     XX_E(file_size(filename, &fsize));
     
     char * buffer = (char*)xxalloc(fsize+1);
     size_t size = fread(buffer, 1, fsize, fp);
     fclose(fp);
     
+    //buffer[fsize-1] = 'A';
     buffer[fsize] = 0;
     
     if (out_contentSize) {
@@ -32,6 +33,8 @@ XXerr file_read(const char * filename, XXstring * out_content, size_t * out_cont
     }
     *out_content = buffer;
     
+    //printf("READ FILE: '%s'", *out_content);
+
     return 0;
 }
 

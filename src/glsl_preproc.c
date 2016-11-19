@@ -16,7 +16,6 @@ void get_path_prefix(const char * path, char ** out_path_prefix) {
 // Concantenates str0[a..b] + str1 + str0[c..d]
 void concat(const char * str0, int a, int b, const char * str1, int c, int d, char ** out_string) {
 
-    /*
     char * tmpstr = xxalloc(strlen(str0)+1);
     strcpy(tmpstr, str0);
     char _x = tmpstr[b];
@@ -29,7 +28,6 @@ void concat(const char * str0, int a, int b, const char * str1, int c, int d, ch
     printf(C_CYAN "%s\n---\n", &tmpstr[c]);
     tmpstr[d] = _x;
     xxfree(tmpstr);
-    */
 
     int str1_len = strlen(str1);
     size_t allocsize = (b-a) + (d-c) + str1_len + 1;
@@ -39,12 +37,14 @@ void concat(const char * str0, int a, int b, const char * str1, int c, int d, ch
     memcpy(&ret[b-a + str1_len], &str0[c], d-c);
     ret[b-a + str1_len + d-c] = 0;
     *out_string = ret;
-    printf(C_GREEN "CONCAT RESULT: %s" C_RESET, ret);
+    printf(C_GREEN "CONCAT RESULT: \"%s\"" C_RESET, ret);
     xxassert_alloc(ret, allocsize);
 }
 
 void _glsl_preproc_process(const char * src, char * path_prefix, char ** out_src) {
     int p = 0;
+
+    printf("PROC: %s\n", src);
 
     int p_offset = 0;
 

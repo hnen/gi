@@ -19,7 +19,7 @@
 #define WINDOW_W 1280
 #define WINDOW_H ((WINDOW_W)*9/16)
 
-#define SCR_W 640
+#define SCR_W 1280
 #define SCR_H ((SCR_W)*9/16)
 
 #define EPSILON 0.0001f
@@ -160,7 +160,7 @@ static void run() {
     render_scene(&g_scene, g_tex, g_fb, glfwGetTime());
 
     GL_E(glBindFramebuffer(GL_FRAMEBUFFER, 0));
-    GL_E(glViewport(0, 0, window_w *2, window_h*2));
+    GL_E(glViewport(0, 0, window_w , window_h));
     GL_E(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
     GL_E(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 

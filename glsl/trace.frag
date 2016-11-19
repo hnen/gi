@@ -1,6 +1,6 @@
 #version 400
 
-#define EMITTER_SAMPLES 10 
+#define EMITTER_SAMPLES 350
 
 #include "trace.glsl"
 
